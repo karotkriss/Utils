@@ -1,4 +1,4 @@
-<div align="center" style="padding-bottom: 2rem;">
+<div align="center" style="padding: 2rem;">
   <a href="https://dev.egov.gy/dev-tools/utils" style="padding bottom: 3rem;">
     <img src="images/icons/utils-icon-black.png" alt="Logo" style="width: 192px; padding: 2rem">
   </a>
@@ -77,7 +77,7 @@ This module is especially useful in custom Frappe apps, helping you build dynami
 2. **Add Utils.js as a Submodule:**
 
 	```bash
-	git submodule add https://github.com/yourusername/utils.git utils
+	git submodule add https://dev.egov.gy/dev-tools/utils.git utils
 	```
 
 3. Initialize the Submodule (for new clones):
