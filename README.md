@@ -60,6 +60,7 @@ This module is especially useful in custom Frappe apps, helping you build dynami
 - **Form Navigation:** Scroll to specific tabs or navigate between them with built-in methods.
 - **Custom Tab Buttons:** Automatically add navigation buttons (Previous/Next or custom) to each tab pane.
 - **Helper Methods:** Determine if there’s a next or previous tab.
+- **Action Interception:** Intercept workflow actions allowing you to prompt users among other things.
 
 ---
 
@@ -282,6 +283,87 @@ if (prevInfo.hasPrevious) {
 }
 
 ```
+
+### Actions and Action Interception
+
+#### Get Actions
+
+```javascript
+// Retrieve available workflow actions (e.g., "Approve", "Reject", "Cancel")
+const actionNames = Utils.getActions();
+console.log(actionNames);
+
+```
+
+#### Action Availability
+
+```javascript
+// check if a specific action is available
+Utils.action('action name', {debug: true});
+
+```
+
+#### Action interception
+
+##### Confirm
+
+```javascript
+// Attaching a confirmation prompt to the "Approve" action.
+const approveAction = Utils.action("Approve", { debug: true });
+if (approveAction) {
+  approveAction.confirm({
+    message: "Are you sure you want to approve this document?",
+    onConfirm: (continueAction) => {
+      console.log("Approval confirmed.");
+      continueAction();
+    },
+    onCancel: () => {
+      console.log("Approval cancelled.");
+    },
+    debug: true
+  });
+}
+```
+
+#### Warn
+
+```javascript
+// Attaching a warning prompt to the "Delete" action using frappe.warn.
+const deleteAction = Utils.action("Delete", { debug: true });
+if (deleteAction) {
+  deleteAction.warn({
+    title: "Warning",
+    message: "This will permanently delete the document. Continue?",
+    onConfirm: (continueAction) => {
+      console.log("Deletion warning confirmed.");
+      continueAction();
+    },
+    onCancel: () => {
+      console.log("Deletion warning cancelled.");
+    },
+    debug: true
+  });
+}
+
+```
+
+#### Throw
+
+```javascript
+// Attaching a conditional throw to the "Submit" action.
+// If the document is not complete (i.e., conditional returns false), an error is thrown.
+const submitAction = Utils.action("Submit", { debug: true });
+if (submitAction) {
+  submitAction.throw({
+    title: "Error",
+    message: "Submission is not allowed because the document is incomplete.",
+    conditional: (frm) => frm.doc.is_complete === true,
+    debug: true
+  });
+}
+
+```
+
 
 ---
 
