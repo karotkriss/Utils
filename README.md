@@ -1,5 +1,5 @@
-<div align="center" style="padding: 2rem;">
-  <a href="https://dev.egov.gy/dev-tools/utils" style="padding bottom: 3rem;">
+<div align="center" style="padding-bottom: 2rem;">
+  <a href="https://github.com/karotkriss/Utils" style="padding bottom: 3rem;">
     <img src="images/icons/utils-icon-black.png" alt="Logo" style="width: 192px; padding: 2rem">
   </a>
 
@@ -65,28 +65,35 @@ This module is especially useful in custom Frappe apps, helping you build dynami
 
 ## Installation
 
-### Adding Utils.js as a Git Submodule
+### Method 1: CDN (Recommended)
 
-1. **Navigate to Your App’s Public JS Folder:**
+Reference the `jsdelivr` in your Frappe app’s `hooks.py` to load it on your pages:
+
+```python
+app_include_js = [
+    "https://cdn.jsdelivr.net/gh/karotkriss/Utils@master/utils.js",
+    # Other JS files can be included here
+]
+```
+### Method 2: Git Subtree ()
+
+#### Adding Utils.js as a Git Subtree
+
+1. **Navigate to Your App’s root:**
 
 	```bash
-   	cd path/to/your_app/public/js
+   	cd path/to/your_apps/root/directory
 	```
 
-	This creates a new folder called utils that contains the Utils.js module.
-2. **Add Utils.js as a Submodule:**
+	This creates a new folder called utils in the public folder that contains the Utils.js module.
+2. **Add Utils.js as a Subtree:**
 
 	```bash
-	git submodule add https://dev.egov.gy/dev-tools/utils.git utils
+	git subtree add --prefix=path/to/public/js/folder/utils https://github.com/karotkriss/Utils.git master --squash
 	```
 
-3. Initialize the Submodule (for new clones):
 
-	```bash
-	git submodule update --init --recursive
-	```
-
-### Referencing in hooks.py
+#### Referencing in hooks.py
 
 Reference the Utils.js file in your Frappe app’s `hooks.py` to load it on your pages:
 
