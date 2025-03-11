@@ -830,7 +830,7 @@ const Utils = (function () {
 	};
 
 	/**
-	 * Finds and returns a workflow action chain for intercepting specified action name.
+	 * Finds and returns a workflow action chain for intercepting specified action.
 	 *
 	 * This function searches the current form's actions for an action button that matches
 	 * the provided action name (the comparison is done after URI-decoding the button’s `data-label`).
@@ -853,9 +853,9 @@ const Utils = (function () {
 	 * @param {boolean} [options.debug=false] - Enable debug logging.
 	 * @returns {ActionChain|null} A chainable action object with the following properties:
 	 *   - **element**: {jQuery} The jQuery element representing the action button.
-	 *   - **confirm(ConfirmProps): ActionChain** - Attaches a confirmation prompt and returns the action chain.
-	 *   - **warn(WarnProps): ActionChain** - Attaches a warning prompt (using `frappe.warn`) and returns the action chain.
-	 *   - **throw(ThrowProps): ActionChain** - Evaluates a condition and, if false, throws an error; returns the action chain.
+	 *   - **confirm(ConfirmProps): ActionChain** - Attaches a confirmation prompt and returns the chain.
+	 *   - **warn(WarnProps): ActionChain** - Attaches a warning prompt (using `frappe.warn`) and returns the chain.
+	 *   - **throw(ThrowProps): ActionChain** - Evaluates a condition and, if false, throws an error; returns the chain.
 	 *
 	 * @example
 	 * // Example: Attaching a confirmation prompt to the "Approve" action.
@@ -905,28 +905,11 @@ const Utils = (function () {
 	 * }
 	 */
 	const action = (action_name, options = {}) => {
-		let $found = null;
-		cur_frm.page.actions.find('a:has([data-label])').each((_, el) => {
-			const $btn = $(el);
-			const labelEncoded = $btn.find('[data-label]').attr('data-label');
-			const label = labelEncoded ? decodeURIComponent(labelEncoded) : "";
-			if (label === action_name) {
-				$found = $btn;
-				return false; // Exit loop.
-			}
-		});
-
-		if (!$found) {
-			const errMsg = `Action '${action_name}' not found.`;
-			frappe.msgprint(errMsg);
-			if (options.debug) {
-				console.warn("Utils.action():", errMsg);
-			}
-			return null;
-		}
+		const actionsContainer = cur_frm.page.actions.get(0);
+		const encodedAction = encodeURIComponent(action_name);
 
 		const actionObj = {
-			element: $found,
+			element: null,
 			/**
 			 * Attaches a confirmation prompt to the action.
 			 * @param {Object} [props={}] - Confirmation-specific properties.
@@ -943,9 +926,6 @@ const Utils = (function () {
 				const onConfirm = mergedOptions.onConfirm;
 				const onCancel = mergedOptions.onCancel;
 
-				const encodedAction = encodeURIComponent(action_name);
-				const actionsContainer = cur_frm.page.actions.get(0);
-
 				const findClosestAnchor = (el) => {
 					while (el && el !== actionsContainer && el.tagName !== 'A') {
 						el = el.parentNode;
@@ -958,7 +938,7 @@ const Utils = (function () {
 					if (target && target.tagName === 'A' && target.querySelector(`[data-label="${encodedAction}"]`)) {
 						e.stopPropagation();
 						e.preventDefault();
-
+						actionObj.element = target;
 						frappe.confirm(
 							message,
 							() => {
@@ -1012,9 +992,6 @@ const Utils = (function () {
 				const onConfirm = mergedOptions.onConfirm;
 				const onCancel = mergedOptions.onCancel;
 
-				const encodedAction = encodeURIComponent(action_name);
-				const actionsContainer = cur_frm.page.actions.get(0);
-
 				const findClosestAnchor = (el) => {
 					while (el && el !== actionsContainer && el.tagName !== 'A') {
 						el = el.parentNode;
@@ -1027,7 +1004,7 @@ const Utils = (function () {
 					if (target && target.tagName === 'A' && target.querySelector(`[data-label="${encodedAction}"]`)) {
 						e.stopPropagation();
 						e.preventDefault();
-
+						actionObj.element = target;
 						frappe.warn(
 							title,
 							message,
@@ -1089,16 +1066,39 @@ const Utils = (function () {
 					return actionObj;
 				}
 
-				const conditionResult = conditional(cur_frm);
-				if (!conditionResult) {
-					if (debug) {
-						console.debug(`Utils.action.throw(): Condition failed for action "${action_name}", throwing error with title "${title}".`);
+				const findClosestAnchor = (el) => {
+					while (el && el !== actionsContainer && el.tagName !== 'A') {
+						el = el.parentNode;
 					}
-					frappe.throw(message, title);
-				} else {
-					if (debug) {
-						console.debug(`Utils.action.throw(): Condition passed for action "${action_name}", no error thrown.`);
+					return el;
+				};
+
+				const capturingHandler = (e) => {
+					const target = findClosestAnchor(e.target);
+					if (target && target.tagName === 'A' && target.querySelector(`[data-label="${encodedAction}"]`)) {
+						e.stopPropagation();
+						e.preventDefault();
+						actionObj.element = target;
+						const conditionResult = conditional(cur_frm);
+						if (!conditionResult) {
+							if (debug) {
+								console.debug(`Utils.action.throw(): Condition failed for action "${action_name}", throwing error with title "${title}".`);
+							}
+							frappe.throw(message, title);
+						} else {
+							if (debug) {
+								console.debug(`Utils.action.throw(): Condition passed for action "${action_name}", allowing click.`);
+							}
+							actionsContainer.removeEventListener("click", capturingHandler, true);
+							target.click();
+							actionsContainer.addEventListener("click", capturingHandler, true);
+						}
 					}
+				};
+
+				actionsContainer.addEventListener("click", capturingHandler, true);
+				if (debug) {
+					console.log(`Custom capturing handler bound for throw on action "${action_name}".`);
 				}
 				return actionObj;
 			}
