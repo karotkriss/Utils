@@ -2,9 +2,11 @@
  * Utils.js
  *
  * A collection of utility functions for Frappe forms.
- * This module simplifies form navigation, field management, validation and action interception.,
+ * This module simplifies form navigation, field management, and workflow tranistions and action interception.,
  * automatically operating on the global cur_frm.
  *
+ * @version 0.5.0
+ * 
  * @module Utils
  */
 const Utils = (function () {
@@ -259,22 +261,48 @@ const Utils = (function () {
 	/**
 	 * Sets the read_only property on specified fields of the current form.
 	 *
-	 * @param {string[]} read_only_fields - Array of field names to update.
-	 * @param {string[]} [exception_states=[]] - Array of workflow states during which fields remain editable.
+	 * @param {Object} props - Configuration object.
+	 * @param {string[]} props.fields - An array of field names.
+	 * @param {string[]} [props.permissions] - Array of roles; if the current user has any of these roles, this function will not apply.
+	 * @param {string[]} [props.exceptionStates] - Array of workflow states during which fields remain editable.
+	 * @param {boolean} [props.debug] - Enable debug logging if true.
 	 */
-	function makeReadOnly(read_only_fields, exception_states = []) {
-		const frm = cur_frm;
-		if (!frm || !frm.doc || !frm.fields_dict) {
-			console.warn("Utils.makeReadOnly(): Invalid Frappe form object provided.");
+	function makeReadOnly(props) {
+		props = props || {};
+
+		if (!cur_frm || !cur_frm.doc || !cur_frm.fields_dict) {
+			if (props.debug) console.warn("Utils.makeReadOnly(): Invalid Frappe form object provided.");
 			return [];
 		}
-		const isExceptionState = exception_states.indexOf(frm.doc.workflow_state) !== -1;
-		read_only_fields.forEach(function (field) {
-			if (frm.fields_dict[field]) {
-				frm.set_df_property(field, "read_only", isExceptionState ? 0 : 1);
-				frm.refresh_field(field);
+
+		// Check permissions only if an array is provided.
+		if (Array.isArray(props.permissions)) {
+			if (userHasRole(props.permissions)) {
+				if (props.debug) {
+					console.debug("Utils.makeReadOnly(): User has bypass role, skipping read-only settings.");
+				}
+				return;
+			}
+		}
+
+		// Ensure props.fields is an array.
+		if (!Array.isArray(props.fields)) {
+			if (props.debug) console.warn("Utils.makeReadOnly(): 'fields' must be an array.");
+			return [];
+		}
+
+		var exceptionStates = props.exceptionStates || [];
+		var isExceptionState = exceptionStates.indexOf(cur_frm.doc.workflow_state) !== -1;
+
+		props.fields.forEach(function (field) {
+			if (cur_frm.fields_dict[field]) {
+				console.log("Setting " + field + " to read_only: " + isExceptionState);
+				cur_frm.set_df_property(field, "read_only", isExceptionState ? 0 : 1);
+				cur_frm.refresh_field(field);
 			} else {
-				console.warn("Utils.makeReadOnly(): Field \"" + field + "\" does not exist in the form or cannot be set read_only.");
+				if (props.debug) {
+					console.warn('Utils.makeReadOnly(): Field "' + field + '" does not exist or cannot be set to read_only.');
+				}
 			}
 		});
 	}
