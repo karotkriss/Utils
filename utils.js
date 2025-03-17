@@ -2,10 +2,10 @@
  * Utils.js
  *
  * A collection of utility functions for Frappe forms.
- * This module simplifies form navigation, field management, and workflow tranistions and action interception.,
+ * This module simplifies form navigation, field management, workflow tranistions, action interception and instance information.,
  * automatically operating on the global cur_frm.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * 
  * @module Utils
  */
@@ -1077,6 +1077,29 @@ const Utils = (function () {
 		}
 	}
 
+	/**
+	 * Provides site information.
+	 * @namespace Utils.site
+	 */
+	const site = {
+		/**
+		 * Returns the list of installed apps with their versions.
+		 *
+		 *
+		 * @returns {Array<Object>} Array of objects with app information (e.g., { name: "AppName", version: "1.2.3" }).
+		 *
+		 * @example
+		 * const apps = Utils.instance.apps();
+		 * console.log(apps); // e.g. [ { name: "ERPNext", version: "v13.0.1" }, ... ]
+		 */
+		apps: () => {
+			if (typeof frappe !== 'undefined' && frappe.boot && frappe.boot.versions) {
+				return frappe.boot.versions;
+			}
+			return [];
+		}
+	}
+
 	// Expose public API methods.
 	return {
 		getTabs: getTabs,
@@ -1094,6 +1117,7 @@ const Utils = (function () {
 		getAllWorkflowTransitions,
 		getWorkflowTransitions,
 		getActions: getActions,
-		action: action
+		action: action,
+		instance: instance
 	};
 })();
