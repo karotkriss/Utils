@@ -1,38 +1,4 @@
 /**
- * @typedef {Object} ActionChain
- * @property {jQuery|null} element - The jQuery element for the action.
- * @property {function(ConfirmProps=): ActionChain} confirm - Attaches a confirmation prompt and returns the chainable action object.
- * @property {function(WarnProps=): ActionChain} warn - Attaches a warning prompt and returns the chainable action object.
- * @property {function(ThrowProps=): ActionChain} throw - Attaches a conditional check that throws an error if the condition fails, returning the chainable action object.
- */
-
-/**
- * @typedef {Object} ConfirmProps
- * @property {string} [message] - The confirmation message. Defaults to "Are you sure you want to [action_name]?".
- * @property {function} [onConfirm] - Callback executed on confirmation. Receives a function (continueAction) to fire the original click event.
- * @property {function} [onCancel] - Callback executed if the confirmation is cancelled.
- * @property {boolean} [debug=false] - Enable debug logging.
- */
-
-/**
- * @typedef {Object} WarnProps
- * @property {string} [title] - The title for the warning prompt.
- * @property {string} [message] - The warning message. Defaults to __( "Warning: Are you sure you want to [action_name]?" ).
- * @property {function} [onConfirm] - Callback executed on warning confirmation. Receives a function (continueAction) to fire the original click event.
- * @property {function} [onCancel] - Callback executed if the warning is cancelled.
- * @property {boolean} [debug=false] - Enable debug logging.
- */
-
-/**
- * @typedef {Object} ThrowProps
- * @property {string} [message] - The error message to throw if the condition fails.
- *                                 Defaults to __( "Action [action_name] is not permitted." ).
- * @property {function} [conditional] - A function that receives cur_frm and returns a boolean.
- *                                     If it returns false, the throw occurs.
- * @property {boolean} [debug=false] - Enable debug logging.
- */
-
-/**
  * Utils.js
  *
  * A collection of utility functions for Frappe forms.
@@ -830,281 +796,90 @@ const Utils = (function () {
 	};
 
 	/**
-	 * Finds and returns a workflow action chain for intercepting specified action name.
-	 *
-	 * This function searches the current form's actions for an action button that matches
-	 * the provided action name (the comparison is done after URI-decoding the button’s `data-label`).
-	 * If found, it returns a chainable object with methods to attach various prompts:
-	 *
-	 * - **confirm(ConfirmProps): ActionChain**  
-	 *   Attaches a confirmation prompt. When the user confirms, the original workflow action is triggered.
-	 *
-	 * - **warn(WarnProps): ActionChain**  
-	 *   Attaches a warning prompt using `frappe.warn` with a specified title and message.
-	 *
-	 * - **throw(ThrowProps): ActionChain**  
-	 *   Evaluates a condition via a required conditional function. If the condition returns false,
-	 *   it throws an error with the specified title and message; if the condition passes, nothing happens.
-	 *
-	 * If the action button is not found, an error message is displayed and the function returns `null`.
-	 *
-	 * @param {string} action_name - The plain text name of the workflow action (e.g., "Approve").
-	 * @param {Object} [options={}] - Optional default configuration for the chainable methods.
-	 * @param {boolean} [options.debug=false] - Enable debug logging.
-	 * @returns {ActionChain|null} A chainable action object with the following properties:
-	 *   - **element**: {jQuery} The jQuery element representing the action button.
-	 *   - **confirm(ConfirmProps): ActionChain** - Attaches a confirmation prompt and returns the action chain.
-	 *   - **warn(WarnProps): ActionChain** - Attaches a warning prompt (using `frappe.warn`) and returns the action chain.
-	 *   - **throw(ThrowProps): ActionChain** - Evaluates a condition and, if false, throws an error; returns the action chain.
-	 *
-	 * @example
-	 * // Example: Attaching a confirmation prompt to the "Approve" action.
-	 * const approveAction = Utils.action("Approve", { debug: true });
-	 * if (approveAction) {
-	 *   approveAction.confirm({
-	 *     message: "Are you sure you want to approve this document?",
-	 *     onConfirm: (continueAction) => {
-	 *       console.log("Approval confirmed.");
-	 *       continueAction();
-	 *     },
-	 *     onCancel: () => {
-	 *       console.log("Approval cancelled.");
-	 *     },
-	 *     debug: true
-	 *   });
-	 * }
-	 *
-	 * @example
-	 * // Example: Attaching a warning prompt to the "Delete" action.
-	 * const deleteAction = Utils.action("Delete", { debug: true });
-	 * if (deleteAction) {
-	 *   deleteAction.warn({
-	 *     title: "Warning",
-	 *     message: "This will permanently delete the document. Continue?",
-	 *     onConfirm: (continueAction) => {
-	 *       console.log("Deletion warning confirmed.");
-	 *       continueAction();
-	 *     },
-	 *     onCancel: () => {
-	 *       console.log("Deletion warning cancelled.");
-	 *     },
-	 *     debug: true
-	 *   });
-	 * }
-	 *
-	 * @example
-	 * // Example: Attaching a throw condition to the "Submit" action.
-	 * const submitAction = Utils.action("Submit", { debug: true });
-	 * if (submitAction) {
-	 *   submitAction.throw({
-	 *     title: "Error",
-	 *     message: "Submission is not allowed because the document is incomplete.",
-	 *     conditional: (frm) => frm.doc.is_complete === true,
-	 *     debug: true
-	 *   });
-	 * }
+	 * Provides workflow action interception utilities for Frappe applications.
+	 * 
+	 * This object contains methods to intercept workflow actions with different behaviors:
+	 * - confirm: Shows a confirmation dialog before allowing the action
 	 */
-	const action = (action_name, options = {}) => {
-		let $found = null;
-		cur_frm.page.actions.find('a:has([data-label])').each((_, el) => {
-			const $btn = $(el);
-			const labelEncoded = $btn.find('[data-label]').attr('data-label');
-			const label = labelEncoded ? decodeURIComponent(labelEncoded) : "";
-			if (label === action_name) {
-				$found = $btn;
-				return false; // Exit loop.
+	const action = {
+		/**
+		 * Intercepts a workflow action with a confirmation dialog.
+		 * 
+		 * @param {Object} props - Configuration options
+		 * @param {string} props.action - The workflow action name to intercept
+		 * @param {string} [props.message] - Custom confirmation message (defaults to "Are you sure you want to [action]?")
+		 * @param {boolean} [props.debug] - Enable debug logging
+		 * @param {Object} [props.updateField] - Field to update on confirmation
+		 * @param {string} props.updateField.field - Field name to update
+		 * @param {*} props.updateField.value - New value to set
+		 * 
+		 * @example
+		 * // Intercept "Submit" action with confirmation dialog and update a counter
+		 * Utils.action.confirm({
+		 *   action: "Submit",
+		 *   message: "Are you sure you want to submit this document?",
+		 *   debug: true,
+		 *   updateField: {
+		 *     field: "revision_count",
+		 *     value: cur_frm.doc.revision_count + 1
+		 *   }
+		 * });
+		 */
+		confirm: (props = {}) => {
+			const { action, message, debug, updateField } = props;
+
+			if (!action) {
+				if (debug) {
+					console.warn("Utils.action.confirm(): No action provided.");
+				}
+				return;
 			}
-		});
 
-		if (!$found) {
-			const errMsg = `Action '${action_name}' not found.`;
-			frappe.msgprint(errMsg);
-			if (options.debug) {
-				console.warn("Utils.action():", errMsg);
-			}
-			return null;
-		}
+			frappe.ui.form.on(cur_frm.doc.doctype, {
+				before_workflow_action: async () => {
+					if (cur_frm.selected_workflow_action !== action) return;
+					if (debug) console.log(`Intercepting Workflow Action: ${action}`);
+					frappe.dom.unfreeze();
 
-		const actionObj = {
-			element: $found,
-			/**
-			 * Attaches a confirmation prompt to the action.
-			 * @param {Object} [props={}] - Confirmation-specific properties.
-			 * @param {string} [props.message] - The confirmation message.
-			 * @param {function} [props.onConfirm] - Callback executed upon confirmation. Receives a function (continueAction) to trigger the action.
-			 * @param {function} [props.onCancel] - Callback executed if confirmation is cancelled.
-			 * @param {boolean} [props.debug] - Enable debug logging.
-			 * @returns {ActionChain} The chainable action object.
-			 */
-			confirm: (props = {}) => {
-				const mergedOptions = Object.assign({}, options, props);
-				const debug = mergedOptions.debug || false;
-				const message = mergedOptions.message || `Are you sure you want to ${action_name}?`;
-				const onConfirm = mergedOptions.onConfirm;
-				const onCancel = mergedOptions.onCancel;
-
-				const encodedAction = encodeURIComponent(action_name);
-				const actionsContainer = cur_frm.page.actions.get(0);
-
-				const findClosestAnchor = (el) => {
-					while (el && el !== actionsContainer && el.tagName !== 'A') {
-						el = el.parentNode;
-					}
-					return el;
-				};
-
-				const capturingHandler = (e) => {
-					const target = findClosestAnchor(e.target);
-					if (target && target.tagName === 'A' && target.querySelector(`[data-label="${encodedAction}"]`)) {
-						e.stopPropagation();
-						e.preventDefault();
-
+					let promise = new Promise((resolve, reject) => {
 						frappe.confirm(
-							message,
+							message || `Are you sure you want to ${action}?`,
 							() => {
-								actionsContainer.removeEventListener("click", capturingHandler, true);
-								if (typeof onConfirm === "function") {
-									onConfirm(() => {
-										target.click();
-										actionsContainer.addEventListener("click", capturingHandler, true);
-									});
+								if (updateField && updateField.field && updateField.value !== undefined) {
+									frappe.db.set_value(cur_frm.doctype, cur_frm.docname, updateField.field, updateField.value)
+										.then(response => {
+											if (debug) {
+												console.debug(`Field ${updateField.field} updated successfully`, response);
+											}
+											resolve();
+										})
+										.catch(error => {
+											if (debug) {
+												console.error(`Error updating field ${updateField.field}`, error);
+											}
+											reject();
+										});
 								} else {
-									target.click();
-									actionsContainer.addEventListener("click", capturingHandler, true);
-								}
-								if (debug) {
-									console.debug(`Utils.action.confirm(): Confirmed action "${action_name}"`);
+									resolve();
 								}
 							},
 							() => {
-								if (typeof onCancel === "function") {
-									onCancel();
-								}
 								if (debug) {
-									console.debug(`Utils.action.confirm(): Cancelled action "${action_name}"`);
+									console.debug(`Utils.action.confirm(): Cancelled action "${action}"`);
 								}
+								reject();
 							}
 						);
-					}
-				};
 
-				actionsContainer.addEventListener("click", capturingHandler, true);
-				if (debug) {
-					console.log(`Custom capturing handler bound for action "${action_name}" using frappe.confirm.`);
+
+					});
+
+					await promise.catch(() => {
+						throw new Error("Workflow action cancelled.");
+					});
 				}
-				return actionObj;
-			},
-			/**
-			 * Attaches a warning prompt to the action using frappe.warn.
-			 * @param {Object} [props={}] - Warning-specific properties.
-			 * @param {string} [props.title] - The title for the warning prompt. Defaults to "Warning".
-			 * @param {string} [props.message] - The warning message.
-			 * @param {function} [props.onConfirm] - Callback executed upon confirmation. Receives a function (continueAction) to trigger the action.
-			 * @param {function} [props.onCancel] - Callback executed if warning is cancelled.
-			 * @param {boolean} [props.debug] - Enable debug logging.
-			 * @returns {ActionChain} The chainable action object.
-			 */
-			warn: (props = {}) => {
-				const mergedOptions = Object.assign({}, options, props);
-				const debug = mergedOptions.debug || false;
-				const title = mergedOptions.title || "Warning";
-				const message = mergedOptions.message || `Warning: Are you sure you want to ${action_name}?`;
-				const onConfirm = mergedOptions.onConfirm;
-				const onCancel = mergedOptions.onCancel;
-
-				const encodedAction = encodeURIComponent(action_name);
-				const actionsContainer = cur_frm.page.actions.get(0);
-
-				const findClosestAnchor = (el) => {
-					while (el && el !== actionsContainer && el.tagName !== 'A') {
-						el = el.parentNode;
-					}
-					return el;
-				};
-
-				const capturingHandler = (e) => {
-					const target = findClosestAnchor(e.target);
-					if (target && target.tagName === 'A' && target.querySelector(`[data-label="${encodedAction}"]`)) {
-						e.stopPropagation();
-						e.preventDefault();
-
-						frappe.warn(
-							title,
-							message,
-							() => {
-								actionsContainer.removeEventListener("click", capturingHandler, true);
-								if (typeof onConfirm === "function") {
-									onConfirm(() => {
-										target.click();
-										actionsContainer.addEventListener("click", capturingHandler, true);
-									});
-								} else {
-									target.click();
-									actionsContainer.addEventListener("click", capturingHandler, true);
-								}
-								if (debug) {
-									console.debug(`Utils.action.warn(): Confirmed warning for action "${action_name}"`);
-								}
-							},
-							() => {
-								if (typeof onCancel === "function") {
-									onCancel();
-								}
-								if (debug) {
-									console.debug(`Utils.action.warn(): Cancelled warning for action "${action_name}"`);
-								}
-							}
-						);
-					}
-				};
-
-				actionsContainer.addEventListener("click", capturingHandler, true);
-				if (debug) {
-					console.log(`Custom capturing handler bound for warn on action "${action_name}" using frappe.warn.`);
-				}
-				return actionObj;
-			},
-			/**
-			 * Evaluates a condition and, if false, throws an error using frappe.throw.
-			 * @param {Object} [props={}] - Throw-specific properties.
-			 * @param {string} [props.title] - The title for the error prompt. Defaults to "Error".
-			 * @param {string} [props.message] - The error message.
-			 * @param {function} props.conditional - A required function that receives cur_frm and returns a boolean.
-			 *   If it returns false, an error is thrown.
-			 * @param {boolean} [props.debug] - Enable debug logging.
-			 * @returns {ActionChain} The chainable action object.
-			 */
-			throw: (props = {}) => {
-				const mergedOptions = Object.assign({}, options, props);
-				const debug = mergedOptions.debug || false;
-				const title = mergedOptions.title || "Error";
-				const message = mergedOptions.message || `Action ${action_name} is not permitted.`;
-				const conditional = mergedOptions.conditional;
-
-				// If no conditional is provided, do nothing.
-				if (typeof conditional !== "function") {
-					if (debug) {
-						console.debug(`Utils.action.throw(): No conditional provided for action "${action_name}". Doing nothing.`);
-					}
-					return actionObj;
-				}
-
-				const conditionResult = conditional(cur_frm);
-				if (!conditionResult) {
-					if (debug) {
-						console.debug(`Utils.action.throw(): Condition failed for action "${action_name}", throwing error with title "${title}".`);
-					}
-					frappe.throw(message, title);
-				} else {
-					if (debug) {
-						console.debug(`Utils.action.throw(): Condition passed for action "${action_name}", no error thrown.`);
-					}
-				}
-				return actionObj;
-			}
-		};
-
-		return actionObj;
+			});
+		},
 	};
 
 	// Expose public API method.
