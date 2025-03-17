@@ -29,6 +29,40 @@ const Utils = (function () {
 	}
 
 	/**
+	 * Helper function to standardize the format of allowed roles
+	 * @private
+	 * @param {String|Array|Object} allowed - The allowed roles in various formats
+	 * @returns {Array} - Array of role names
+	 */
+	function formatAllowedRoles(allowed) {
+		try {
+			if (!allowed) return [];
+
+			// Handle string format (comma-separated)
+			if (typeof allowed === 'string') {
+				return allowed.split(',').map(role => role.trim()).filter(Boolean);
+			}
+
+			// Handle array format
+			if (Array.isArray(allowed)) {
+				return allowed.map(role =>
+					typeof role === 'string' ? role.trim() : String(role)
+				).filter(Boolean);
+			}
+
+			// Handle object format
+			if (typeof allowed === 'object') {
+				return Object.keys(allowed).filter(Boolean);
+			}
+
+			return [];
+		} catch (error) {
+			console.warn("Error formatting allowed roles:", error);
+			return [];
+		}
+	}
+
+	/**
 	 * Returns an object containing an array of tab fieldnames and a mapping of tab fieldnames to their definitions.
 	 * Uses the global cur_frm.
 	 *
@@ -799,29 +833,31 @@ const Utils = (function () {
 	}
 
 	/**
-	 * Retrieves and returns an array of decoded action names from the current form's action buttons.
+	 * Retrieves and returns an array of allowed workflow action names for the current form.
 	 *
-	 * This function iterates over all action buttons contained in `cur_frm.page.actions` and
-	 * extracts the value of the `data-label` attribute (decoded from URI encoding) from each button.
-	 * The resulting array represents the available workflow actions.
+	 * This function uses the getWorkflowTransitions() helper to obtain the list of transitions
+	 * available from the current workflow state of the document and then maps these transitions
+	 * to extract the action names.
 	 *
-	 * @returns {string[]} An array of decoded action names.
+	 * @returns {string[]} An array of allowed workflow action names.
 	 *
 	 * @example
-	 * // Retrieve the list of available workflow actions:
-	 * const actionNames = Utils.getActions();
-	 * console.log(actionNames); // e.g. ["Approve", "Reject", "Cancel"]
+	 * // Retrieve the allowed workflow actions:
+	 * const actions = Utils.getActions();
+	 * console.log(actions); // e.g. ["Approve", "Reject"]
 	 */
 	const getActions = () => {
-		const actionsList = [];
-		cur_frm.page.actions.find('a:has([data-label])').each((_, el) => {
-			const $btn = $(el);
-			const labelEncoded = $btn.find('[data-label]').attr('data-label');
-			const label = labelEncoded ? decodeURIComponent(labelEncoded) : "";
-			actionsList.push(label);
-		});
-		return actionsList;
+		try {
+			// Get transitions for the current state using the helper.
+			const transitions = getWorkflowTransitions();
+			// Map the transitions to their action names.
+			return transitions.map(transition => transition.action);
+		} catch (error) {
+			console.warn("Error in getActions:", error);
+			return [];
+		}
 	};
+
 
 	/**
 	 * Provides workflow action interception utilities for Frappe applications.
@@ -910,7 +946,108 @@ const Utils = (function () {
 		},
 	};
 
-	// Expose public API method.
+	/**
+	 * Get possible workflow transitions from the current state for the loaded document
+	 * @returns {Array} - Array of possible transitions from current state with their allowed roles
+	 */
+	function getWorkflowTransitions() {
+		try {
+			if (!cur_frm || !cur_frm.doc || !cur_frm.doc.doctype) {
+				console.warn("Invalid form or missing DocType");
+				return [];
+			}
+
+			const doctype = cur_frm.doc.doctype;
+			const workflow_state = cur_frm.doc.workflow_state;
+
+			if (!workflow_state) {
+				console.warn(`No workflow state found for ${doctype}`);
+				return [];
+			}
+
+			// Get transitions from the current form's workflow if available
+			let transitions = [];
+
+			// First check cur_frm.workflow (most reliable source)
+			if (cur_frm.workflow && cur_frm.workflow.transitions) {
+				transitions = cur_frm.workflow.transitions;
+			}
+			// Then check frappe.workflow.workflows
+			else if (frappe.workflow && frappe.workflow.workflows && frappe.workflow.workflows[doctype]) {
+				transitions = frappe.workflow.workflows[doctype].transitions || [];
+			}
+
+			if (transitions.length === 0) {
+				console.warn(`No workflow transitions found for ${doctype}`);
+				return [];
+			}
+
+			// Filter transitions for current state only
+			const currentStateTransitions = transitions.filter(t => t.state === workflow_state);
+
+			// Format the results with transition details and allowed roles
+			return currentStateTransitions.map(transition => {
+				return {
+					action: transition.action || "",
+					next_state: transition.next_state || "",
+					allowed_roles: formatAllowedRoles(transition.allowed),
+					condition: transition.condition || "",
+					state: transition.state || ""
+				};
+			});
+		} catch (error) {
+			console.warn("Error in getWorkflowTransitions:", error);
+			return [];
+		}
+	}
+
+	/**
+	 * Get all workflow transitions defined for a DocType
+	 * @returns {Array} - Array of all workflow transitions with their allowed roles
+	 */
+	function getAllWorkflowTransitions() {
+		try {
+			if (!cur_frm || !cur_frm.doc || !cur_frm.doc.doctype) {
+				console.warn("Invalid form or missing DocType");
+				return [];
+			}
+
+			const doctype = cur_frm.doc.doctype;
+
+			// Get transitions from the current form's workflow if available
+			let transitions = [];
+
+			// First check cur_frm.workflow (most reliable source)
+			if (cur_frm.workflow && cur_frm.workflow.transitions) {
+				transitions = cur_frm.workflow.transitions;
+			}
+			// Then check frappe.workflow.workflows
+			else if (frappe.workflow && frappe.workflow.workflows && frappe.workflow.workflows[doctype]) {
+				transitions = frappe.workflow.workflows[doctype].transitions || [];
+			}
+
+			if (transitions.length === 0) {
+				console.warn(`No workflow transitions found for ${doctype}`);
+				return [];
+			}
+
+			// Format the results with transition details and allowed roles
+			return transitions.map(transition => {
+				return {
+					action: transition.action || "",
+					next_state: transition.next_state || "",
+					state: transition.state || "",
+					allowed_roles: formatAllowedRoles(transition.allowed),
+					condition: transition.condition || ""
+				};
+			});
+		} catch (error) {
+			console.warn("Error in getAllWorkflowTransitions:", error);
+			return [];
+		}
+	}
+
+	// Expose public API methods.
 	return {
 		getTabs: getTabs,
 		getFieldsInTab: getFieldsInTab,
@@ -924,6 +1061,8 @@ const Utils = (function () {
 		addTabButtons: addTabButtons,
 		hasNextTab: hasNextTab,
 		hasPreviousTab: hasPreviousTab,
+		getAllWorkflowTransitions,
+		getWorkflowTransitions,
 		getActions: getActions,
 		action: action
 	};
