@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, and workflow tranistions and action interception.,
  * automatically operating on the global cur_frm.
  *
- * @version 0.7.0
+ * @version 0.8.0
  * 
  * @module Utils
  */
@@ -268,29 +268,36 @@ const Utils = (function () {
 	/**
 	 * Checks mandatory fields in the current form and marks them as required if empty.
 	 *
-	 * @param {string[]} mandatory_fields - Array of field names to check.
-	 * @returns {Array|boolean} Array of missing field names if any are empty; otherwise, true.
+	 * @param {Object} props - The configuration object.
+	 * @param {string[]} props.fields - Array of field names to check.
+	 * @returns {string[]|boolean} Returns an array of missing field names if any are empty; otherwise, returns true.
+	 *
+	 * @example
+	 * // Check if the fields "first_name" and "last_name" are filled
+	 * const result = checkMandatory({ fields: ["first_name", "last_name"] });
+	 * if (result !== true) {
+	 *   console.log("Missing mandatory fields:", result);
+	 * }
 	 */
-	function checkMandatory(mandatory_fields) {
+	const checkMandatory = ({ fields = [] } = {}) => {
 		const frm = cur_frm;
-		if (!frm || !frm.meta || !frm.meta.fields) {
+		if (!frm?.meta?.fields) {
 			console.warn("Utils.checkMandatory(): Invalid Frappe form object provided.");
 			return [];
 		}
-
-		const missing_fields = [];
-		mandatory_fields.forEach(function (field) {
+		const missingFields = [];
+		fields.forEach(field => {
 			if (frm.fields_dict[field]) {
 				if (!frm.doc[field]) {
 					frm.set_df_property(field, "reqd", 1);
 					frm.refresh_field(field);
-					missing_fields.push(field);
+					missingFields.push(field);
 				}
 			} else {
-				console.warn("Utils.checkMandatory(): Field \"" + field + "\" does not exist in the form or cannot be marked mandatory.");
+				console.warn(`Utils.checkMandatory(): Field "${field}" does not exist in the form or cannot be marked mandatory.`);
 			}
 		});
-		return missing_fields.length > 0 ? missing_fields : true;
+		return missingFields.length > 0 ? missingFields : true;
 	}
 
 	/**
