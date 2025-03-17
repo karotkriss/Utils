@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, and workflow tranistions and action interception.,
  * automatically operating on the global cur_frm.
  *
- * @version 0.10.0
+ * @version 0.11.0
  * 
  * @module Utils
  */
@@ -125,14 +125,21 @@ const Utils = (function () {
 	/**
 	 * Retrieves all fields within a specified tab from the current form.
 	 *
-	 * @param {string} tabFieldName - The fieldname of the tab.
-	 * @returns {Object} An object with:
-	 *   - fields {string[]} Array of fieldnames within the tab.
-	 *   - json {Object} Mapping from fieldnames to field definitions.
+	 * @param {Object} props - The configuration object.
+	 * @param {string} props.tab - The fieldname of the target tab.
+	 * @returns {{fields: string[], json: Object}} An object containing:
+	 *   - fields: An array of fieldnames present within the tab.
+	 *   - json: An object mapping each fieldname to its field definition.
+	 *
+	 * @example
+	 * // Retrieve fields in a tab named "my_tab"
+	 * const { fields, json } = getFieldsInTab({ tab: "my_tab" });
+	 * console.log("Fields in tab:", fields);
+	 * console.log("Field definitions:", json);
 	 */
-	function getFieldsInTab(tabFieldName) {
+	const getFieldsInTab = ({ tab } = {}) => {
 		const frm = cur_frm;
-		if (!frm || !frm.meta || !frm.meta.fields) {
+		if (!frm?.meta?.fields) {
 			console.warn("Utils.getFieldsInTab(): Invalid Frappe form object provided.");
 			return {};
 		}
@@ -142,9 +149,9 @@ const Utils = (function () {
 		let collectFields = false;
 		let tabFound = false;
 
-		frm.meta.fields.forEach(function (field) {
+		frm.meta.fields.forEach(field => {
 			if (field.fieldtype === "Tab Break") {
-				if (field.fieldname === tabFieldName) {
+				if (field.fieldname === tab) {
 					tabFound = true;
 					collectFields = true;
 				} else if (collectFields) {
@@ -158,12 +165,14 @@ const Utils = (function () {
 		});
 
 		if (!tabFound) {
-			console.warn("Utils.getFieldsInTab(): Tab with fieldname \"" + tabFieldName + "\" not found.");
+			console.warn(`Utils.getFieldsInTab(): Tab with fieldname "${tab}" not found.`);
 		} else if (fieldsInTab.length === 0) {
-			console.warn("Utils.getFieldsInTab(): No fields found in tab \"" + tabFieldName + "\".");
+			console.warn(`Utils.getFieldsInTab(): No fields found in tab "${tab}".`);
 		}
+
 		return { fields: fieldsInTab, json: fieldsInTabJSON };
 	}
+
 
 	/**
 	 * Retrieves all fields within a specified section from the current form.
@@ -405,39 +414,50 @@ const Utils = (function () {
 	/**
 	 * Navigates to a specified tab in the current form and scrolls to its first valid field.
 	 *
-	 * @param {string} tabFieldName - The fieldname of the target tab.
+	 * This function utilizes the refactored getFieldsInTab API, which expects a props object with:
+	 *   - tab {string}: The fieldname of the target tab.
+	 *
+	 * @param {Object} props - The configuration object.
+	 * @param {string} props.tab - The fieldname of the target tab.
+	 *
+	 * @example
+	 * // Navigate to the tab with fieldname "details_tab"
+	 * goToTab({ tab: "details_tab" });
 	 */
-	function goToTab(tabFieldName) {
+	const goToTab = ({ tab } = {}) => {
 		const frm = cur_frm;
-		if (!frm || !frm.meta || !frm.meta.fields) {
+		if (!frm?.meta?.fields) {
 			console.warn("Utils.goToTab(): Invalid Frappe form object provided.");
 			return;
 		}
-		const result = getFieldsInTab(tabFieldName);
-		const fields = result.fields;
-		const json = result.json;
+		// Use the refactored getFieldsInTab that accepts { tab }.
+		const { fields, json } = getFieldsInTab({ tab });
 		if (!fields || fields.length === 0) {
-			console.warn("Utils.goToTab(): Tab with fieldname \"" + tabFieldName + "\" not found or contains no valid fields.");
+			console.warn(`Utils.goToTab(): Tab with fieldname "${tab}" not found or contains no valid fields.`);
 			return;
 		}
-		const firstValidField = fields.find(function (fieldname) {
+		const firstValidField = fields.find(fieldname => {
 			const fieldMeta = json[fieldname];
 			return fieldMeta && fieldMeta.fieldtype !== "Column Break" && fieldMeta.fieldtype !== "Section Break";
 		});
 		if (!firstValidField) {
-			console.warn("Utils.goToTab(): No scrollable fields found in tab \"" + tabFieldName + "\".");
+			console.warn(`Utils.goToTab(): No scrollable fields found in tab "${tab}".`);
 			return;
 		}
 		frm.scroll_to_field(firstValidField);
-	}
+	};
 
 	/**
 	 * Navigates to the next tab in the current form.
+	 *
+	 * This function depends on the getTabs API to retrieve the list of tabs and then calls goToTab using the refactored props.
+	 *
+	 * @example
+	 * // Navigate to the next tab
+	 * goToTab.next();
 	 */
-	goToTab.next = function () {
-		const frm = cur_frm;
-		const tabsData = getTabs(true);
-		const tabs = tabsData.tabs;
+	goToTab.next = () => {
+		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
 			console.warn("Utils.goToTab.next(): No tabs found in the form.");
 			return;
@@ -447,16 +467,16 @@ const Utils = (function () {
 			console.warn("Utils.goToTab.next(): No active tab found.");
 			return;
 		}
-		const currentTabFieldname = activeTabLink.data("fieldname");
-		const currentTabIndex = tabs.indexOf(currentTabFieldname);
+		const currentTab = activeTabLink.data("fieldname");
+		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
 			console.warn("Utils.goToTab.next(): Current tab not found in the list of tabs.");
 			return;
 		}
 		const nextTabIndex = currentTabIndex + 1;
 		if (nextTabIndex < tabs.length) {
-			const nextTabFieldname = tabs[nextTabIndex];
-			goToTab(nextTabFieldname);
+			const nextTab = tabs[nextTabIndex];
+			goToTab({ tab: nextTab });
 		} else {
 			console.warn("Utils.goToTab.next(): No next tab found. You are already on the last tab.");
 		}
@@ -464,11 +484,15 @@ const Utils = (function () {
 
 	/**
 	 * Navigates to the previous tab in the current form.
+	 *
+	 * This function depends on the getTabs API to retrieve the list of tabs and then calls goToTab using the refactored props.
+	 *
+	 * @example
+	 * // Navigate to the previous tab
+	 * goToTab.previous();
 	 */
-	goToTab.previous = function () {
-		const frm = cur_frm;
-		const tabsData = getTabs(true);
-		const tabs = tabsData.tabs;
+	goToTab.previous = () => {
+		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
 			console.warn("Utils.goToTab.previous(): No tabs found in the form.");
 			return;
@@ -478,20 +502,21 @@ const Utils = (function () {
 			console.warn("Utils.goToTab.previous(): No active tab found.");
 			return;
 		}
-		const currentTabFieldname = activeTabLink.data("fieldname");
-		const currentTabIndex = tabs.indexOf(currentTabFieldname);
+		const currentTab = activeTabLink.data("fieldname");
+		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
 			console.warn("Utils.goToTab.previous(): Current tab not found in the list of tabs.");
 			return;
 		}
 		const previousTabIndex = currentTabIndex - 1;
 		if (previousTabIndex >= 0) {
-			const previousTabFieldname = tabs[previousTabIndex];
-			goToTab(previousTabFieldname);
+			const previousTab = tabs[previousTabIndex];
+			goToTab({ tab: previousTab });
 		} else {
 			console.warn("Utils.goToTab.previous(): No previous tab found. You are already on the first tab.");
 		}
 	};
+
 
 	/**
 	 * Saves the current form and then executes the given callback.
