@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, and workflow tranistions and action interception.,
  * automatically operating on the global cur_frm.
  *
- * @version 0.8.0
+ * @version 0.9.0
  * 
  * @module Utils
  */
@@ -303,20 +303,25 @@ const Utils = (function () {
 	/**
 	 * Changes the workflow state of the current form.
 	 *
-	 * @param {string} new_state - The new workflow state.
-	 * @param {string} [current_state_check] - Optional. Only change if current workflow state matches this.
+	 * @param {Object} props - The configuration object.
+	 * @param {string} props.newState - The new workflow state to set.
+	 * @param {string} [props.currentStateCheck] - Optional. Only change if the current workflow state matches this value.
+	 *
+	 * @example
+	 * // Change the workflow state to "Approved" only if the current state is "Pending"
+	 * changeWorkflowState({ newState: "Approved", currentStateCheck: "Pending" });
 	 */
-	function changeWorkflowState(new_state, current_state_check) {
+	const changeWorkflowState = ({ newState, currentStateCheck } = {}) => {
 		const frm = cur_frm;
 		if (!frm) {
 			console.warn("Utils.changeWorkflowState(): Invalid Frappe form object provided.");
 			return;
 		}
-		if (current_state_check && frm.doc.workflow_state !== current_state_check) {
-			console.warn("Utils.changeWorkflowState(): Current state is not " + current_state_check + ". State change aborted.");
+		if (currentStateCheck && frm.doc.workflow_state !== currentStateCheck) {
+			console.warn(`Utils.changeWorkflowState(): Current state is not ${currentStateCheck}. State change aborted.`);
 			return;
 		}
-		frm.set_value("workflow_state", new_state);
+		frm.set_value("workflow_state", newState);
 		frm.refresh_field("workflow_state");
 	}
 
