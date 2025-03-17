@@ -306,8 +306,11 @@ const Utils = (function () {
 				console.warn(`Utils.checkMandatory(): Field "${field}" does not exist in the form or cannot be marked mandatory.`);
 			}
 		});
-		frm.dirty()
-		frm.save()
+
+		if (missingFields.length > 0) {
+			frm.dirty()
+		}
+
 		return missingFields.length > 0 ? missingFields : true;
 	}
 
