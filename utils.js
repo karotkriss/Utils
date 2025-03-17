@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, and workflow tranistions and action interception.,
  * automatically operating on the global cur_frm.
  *
- * @version 0.12.0
+ * @version 0.13.0
  * 
  * @module Utils
  */
@@ -335,50 +335,67 @@ const Utils = (function () {
 	}
 
 	/**
-	 * Sets the read_only property on specified fields of the current form.
+	 * Sets the read_only property on specified fields based on conditions and permissions.
 	 *
-	 * @param {Object} props - Configuration object.
-	 * @param {string[]} props.fields - An array of field names.
-	 * @param {string[]} [props.permissions] - Array of roles; if the current user has any of these roles, this function will not apply.
-	 * @param {string[]} [props.exceptionStates] - Array of workflow states during which fields remain editable.
-	 * @param {boolean} [props.debug] - Enable debug logging if true.
+	 * This function will skip updating fields that are already readonly if the preserveReadonly flag is set to true.
+	 *
+	 * @param {Object} props - The configuration object.
+	 * @param {string[]} props.fields - An array of field names to update.
+	 * @param {string[]} [props.permissions=[]] - Array of roles; if the current user has any of these roles, read_only settings are skipped.
+	 * @param {string[]} [props.exceptionStates=[]] - Array of workflow states during which fields remain editable.
+	 * @param {boolean} [props.preserveReadonly=false] - If true, fields that are already readonly will be preserved.
+	 * @param {boolean} [props.debug=false] - Enable debug logging.
+	 *
+	 * @example
+	 * // Set fields "first_name" and "last_name" as readonly, but preserve those already readonly.
+	 * makeReadOnly({
+	 *   fields: ["first_name", "last_name"],
+	 *   preserveReadonly: true,
+	 *   debug: true
+	 * });
 	 */
-	function makeReadOnly(props) {
-		props = props || {};
-
-		if (!cur_frm || !cur_frm.doc || !cur_frm.fields_dict) {
-			if (props.debug) console.warn("Utils.makeReadOnly(): Invalid Frappe form object provided.");
+	const makeReadOnly = ({
+		fields = [],
+		permissions = [],
+		exceptionStates = [],
+		preserveReadonly = false,
+		debug = false
+	} = {}) => {
+		const frm = cur_frm;
+		if (!frm || !frm.doc || !frm.fields_dict) {
+			if (debug) console.warn("Utils.makeReadOnly(): Invalid Frappe form object provided.");
 			return [];
 		}
 
-		// Check permissions only if an array is provided.
-		if (Array.isArray(props.permissions)) {
-			if (userHasRole(props.permissions)) {
-				if (props.debug) {
-					console.debug("Utils.makeReadOnly(): User has bypass role, skipping read-only settings.");
-				}
-				return;
-			}
+		// Skip updating if user has a bypass role.
+		if (Array.isArray(permissions) && userHasRole(permissions)) {
+			if (debug) console.debug("Utils.makeReadOnly(): User has bypass role, skipping read-only settings.");
+			return;
 		}
 
-		// Ensure props.fields is an array.
-		if (!Array.isArray(props.fields)) {
-			if (props.debug) console.warn("Utils.makeReadOnly(): 'fields' must be an array.");
+		if (!Array.isArray(fields)) {
+			if (debug) console.warn("Utils.makeReadOnly(): 'fields' must be an array.");
 			return [];
 		}
 
-		var exceptionStates = props.exceptionStates || [];
-		var isExceptionState = exceptionStates.indexOf(cur_frm.doc.workflow_state) !== -1;
+		const isExceptionState = exceptionStates.includes(cur_frm.doc.workflow_state);
 
-		props.fields.forEach(function (field) {
-			if (cur_frm.fields_dict[field]) {
-				console.log("Setting " + field + " to read_only: " + isExceptionState);
-				cur_frm.set_df_property(field, "read_only", isExceptionState ? 0 : 1);
-				cur_frm.refresh_field(field);
-			} else {
-				if (props.debug) {
-					console.warn('Utils.makeReadOnly(): Field "' + field + '" does not exist or cannot be set to read_only.');
+		fields.forEach(field => {
+			if (frm.fields_dict[field]) {
+				// If preserveReadonly is enabled and the field is already readonly, skip updating it.
+				if (
+					preserveReadonly &&
+					frm.fields_dict[field].df &&
+					frm.fields_dict[field].df.read_only
+				) {
+					if (debug) console.debug(`Utils.makeReadOnly(): Preserving field "${field}" as readonly.`);
+					return;
 				}
+				console.log(`Setting ${field} to read_only: ${isExceptionState ? 0 : 1}`);
+				frm.set_df_property(field, "read_only", isExceptionState ? 0 : 1);
+				frm.refresh_field(field);
+			} else if (debug) {
+				console.warn(`Utils.makeReadOnly(): Field "${field}" does not exist in the form or cannot be set to read_only.`);
 			}
 		});
 	}
