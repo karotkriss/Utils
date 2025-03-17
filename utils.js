@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, and workflow tranistions and action interception.,
  * automatically operating on the global cur_frm.
  *
- * @version 0.9.0
+ * @version 0.10.0
  * 
  * @module Utils
  */
@@ -375,24 +375,29 @@ const Utils = (function () {
 	}
 
 	/**
-	 * Hides or shows specified fields in the current form based on workflow state.
+	 * Hides or shows specified fields in the current form based on the workflow state.
 	 *
-	 * @param {string[]} fields_to_hide - Array of field names to hide.
-	 * @param {string[]} [exception_states=[]] - Array of workflow states where the fields remain visible.
+	 * @param {Object} props - The configuration object.
+	 * @param {string[]} props.fieldsToHide - Array of field names to hide.
+	 * @param {string[]} [props.exceptionStates=[]] - Array of workflow states during which the fields remain visible.
+	 *
+	 * @example
+	 * // Hide fields "phone" and "email" unless the workflow state is "Draft"
+	 * hideFields({ fieldsToHide: ["phone", "email"], exceptionStates: ["Draft"] });
 	 */
-	function hideFields(fields_to_hide, exception_states = []) {
+	const hideFields = ({ fieldsToHide = [], exceptionStates = [] } = {}) => {
 		const frm = cur_frm;
-		if (!frm || !frm.doc || !frm.fields_dict) {
+		if (!frm?.doc || !frm.fields_dict) {
 			console.warn("Utils.hideFields(): Invalid Frappe form object provided.");
 			return [];
 		}
-		const isExceptionState = exception_states.indexOf(frm.doc.workflow_state) !== -1;
-		fields_to_hide.forEach(function (field) {
+		const isExceptionState = exceptionStates.includes(frm.doc.workflow_state);
+		fieldsToHide.forEach(field => {
 			if (frm.fields_dict[field]) {
 				frm.set_df_property(field, "hidden", isExceptionState ? 0 : 1);
 				frm.refresh_field(field);
 			} else {
-				console.warn("Utils.hideFields(): Field \"" + field + "\" does not exist in the form or cannot be hidden.");
+				console.warn(`Utils.hideFields(): Field "${field}" does not exist in the form or cannot be hidden.`);
 			}
 		});
 	}
