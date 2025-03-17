@@ -218,14 +218,21 @@ const Utils = (function () {
 	/**
 	 * Retrieves all fields within a specified column from the current form.
 	 *
-	 * @param {string} columnFieldName - The fieldname of the column.
-	 * @returns {Object} An object with:
-	 *   - fields {string[]} Array of fieldnames in the column.
-	 *   - json {Object} Mapping from fieldnames to field definitions.
+	 * @param {Object} props - The configuration object.
+	 * @param {string} props.columnFieldName - The fieldname of the target column.
+	 * @returns {{fields: string[], json: Object}} An object containing:
+	 *   - fields: An array of fieldnames present within the column.
+	 *   - json: An object mapping each fieldname to its field definition.
+	 *
+	 * @example
+	 * // Retrieve fields in a column named "my_column"
+	 * const { fields, json } = getFieldsInColumn({ columnFieldName: "my_column" });
+	 * console.log("Column Fields:", fields);
+	 * console.log("Field Definitions:", json);
 	 */
-	function getFieldsInColumn(columnFieldName) {
+	const getFieldsInColumn = ({ columnFieldName } = {}) => {
 		const frm = cur_frm;
-		if (!frm || !frm.meta || !frm.meta.fields) {
+		if (!frm?.meta?.fields) {
 			console.warn("Utils.getFieldsInColumn(): Invalid Frappe form object provided.");
 			return {};
 		}
@@ -235,7 +242,7 @@ const Utils = (function () {
 		let collectFields = false;
 		let columnFound = false;
 
-		frm.meta.fields.forEach(function (field) {
+		frm.meta.fields.forEach(field => {
 			if (field.fieldtype === "Column Break") {
 				if (field.fieldname === columnFieldName) {
 					columnFound = true;
@@ -251,9 +258,9 @@ const Utils = (function () {
 		});
 
 		if (!columnFound) {
-			console.warn("Utils.getFieldsInColumn(): Column with fieldname \"" + columnFieldName + "\" not found.");
+			console.warn(`Utils.getFieldsInColumn(): Column with fieldname "${columnFieldName}" not found.`);
 		} else if (fieldsInColumn.length === 0) {
-			console.warn("Utils.getFieldsInColumn(): No fields found in column \"" + columnFieldName + "\".");
+			console.warn(`Utils.getFieldsInColumn(): No fields found in column "${columnFieldName}".`);
 		}
 		return { fields: fieldsInColumn, json: fieldsInColumnJSON };
 	}
