@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, and workflow tranistions and action interception.,
  * automatically operating on the global cur_frm.
  *
- * @version 0.5.0
+ * @version 0.6.0
  * 
  * @module Utils
  */
@@ -63,17 +63,27 @@ const Utils = (function () {
 	}
 
 	/**
-	 * Returns an object containing an array of tab fieldnames and a mapping of tab fieldnames to their definitions.
-	 * Uses the global cur_frm.
+	 * Retrieves all "Tab Break" fields from the global form (cur_frm) and returns an object containing:
+	 * - an array of tab fieldnames,
+	 * - a JSON mapping of each tab fieldname to its corresponding field definition.
 	 *
-	 * @param {boolean} [exclude_hidden=false] - Whether to exclude hidden fields.
-	 * @returns {Object} An object with:
-	 *   - tabs {string[]} Array of tab fieldnames.
-	 *   - json {Object} Mapping from tab fieldnames to field definitions.
+	 * This function also evaluates any dependency expressions specified on the tab fields.
+	 *
+	 * @param {Object} [props={}] - The configuration object.
+	 * @param {boolean} [props.excludeHidden=false] - Flag indicating whether to exclude hidden tabs.
+	 * @returns {{tabs: string[], json: Object}} An object containing:
+	 *   - tabs: An array of tab fieldnames.
+	 *   - json: An object mapping tab fieldnames to their field definitions.
+	 *
+	 * @example
+	 * // Retrieve tabs while excluding hidden ones
+	 * const { tabs, json } = getTabs({ excludeHidden: true });
+	 * console.log("Tabs:", tabs);
+	 * console.log("Tab Definitions:", json);
 	 */
-	function getTabs(exclude_hidden = false) {
+	const getTabs = ({ excludeHidden = false } = {}) => {
 		const frm = cur_frm;
-		if (!frm || !frm.meta || !frm.meta.fields) {
+		if (!frm?.meta?.fields) {
 			console.warn("Utils.getTabs(): Invalid Frappe form object provided.");
 			return { tabs: [], json: {} };
 		}
@@ -81,26 +91,23 @@ const Utils = (function () {
 		const tabs = [];
 		const tabsJSON = {};
 
-		frm.meta.fields.forEach(function (field) {
+		frm.meta.fields.forEach(field => {
 			if (field.fieldtype === "Tab Break") {
-				if (exclude_hidden && field.hidden) return;
-				// Evaluate dependency expression if provided.
+				if (excludeHidden && field.hidden) return;
 				if (field.depends_on) {
 					let expr = field.depends_on.trim();
-					if (expr.indexOf("eval:") === 0) {
-						expr = expr.substring(5);
-					}
+					if (expr.startsWith("eval:")) expr = expr.substring(5);
 					try {
 						// Replace "doc." with "frm.doc." to properly reference the form document.
 						if (/\bdoc\./.test(expr)) {
 							expr = expr.replace(/\bdoc\./g, "frm.doc.");
 						}
 						if (!eval(expr)) {
-							console.warn("Utils.getTabs(): Tab \"" + field.label + "\" dependency check failed. Expression: " + field.depends_on);
+							console.warn(`Utils.getTabs(): Tab "${field.label}" dependency check failed. Expression: ${field.depends_on}`);
 							return;
 						}
 					} catch (error) {
-						console.warn("Utils.getTabs(): Error evaluating dependency for tab \"" + field.label + "\": " + error.message);
+						console.warn(`Utils.getTabs(): Error evaluating dependency for tab "${field.label}": ${error.message}`);
 						return;
 					}
 				}
@@ -112,7 +119,7 @@ const Utils = (function () {
 		if (tabs.length === 0) {
 			console.warn("Utils.getTabs(): No tabs found in the form.");
 		}
-		return { tabs: tabs, json: tabsJSON };
+		return { tabs, json: tabsJSON };
 	}
 
 	/**
