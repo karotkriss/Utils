@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow tranistions, action interception and instance information.,
  * automatically operating on the global cur_frm.
  *
- * @version 1.1.0
+ * @version 1.1.1
  * 
  * @module Utils
  */
@@ -1085,7 +1085,6 @@ const Utils = (function () {
 		/**
 		 * Returns the list of installed apps with their versions.
 		 *
-		 *
 		 * @returns {Array<Object>} Array of objects with app information (e.g., { name: "AppName", version: "1.2.3" }).
 		 *
 		 * @example
@@ -1118,6 +1117,6 @@ const Utils = (function () {
 		getWorkflowTransitions,
 		getActions: getActions,
 		action: action,
-		instance: instance
+		site: site
 	};
 })();
