@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, and workflow tranistions and action interception.,
  * automatically operating on the global cur_frm.
  *
- * @version 0.6.0
+ * @version 0.7.0
  * 
  * @module Utils
  */
@@ -168,14 +168,21 @@ const Utils = (function () {
 	/**
 	 * Retrieves all fields within a specified section from the current form.
 	 *
-	 * @param {string} sectionFieldName - The fieldname of the section.
-	 * @returns {Object} An object with:
-	 *   - fields {string[]} Array of fieldnames in the section.
-	 *   - json {Object} Mapping from fieldnames to field definitions.
+	 * @param {Object} props - The configuration object.
+	 * @param {string} props.sectionFieldName - The fieldname of the target section.
+	 * @returns {{fields: string[], json: Object}} An object containing:
+	 *   - fields: An array of fieldnames present within the section.
+	 *   - json: An object mapping each fieldname to its field definition.
+	 *
+	 * @example
+	 * // Retrieve fields in a section named "my_section"
+	 * const { fields, json } = getFieldsInSection({ sectionFieldName: "my_section" });
+	 * console.log("Section Fields:", fields);
+	 * console.log("Field Definitions:", json);
 	 */
-	function getFieldsInSection(sectionFieldName) {
+	const getFieldsInSection = ({ sectionFieldName } = {}) => {
 		const frm = cur_frm;
-		if (!frm || !frm.meta || !frm.meta.fields) {
+		if (!frm?.meta?.fields) {
 			console.warn("Utils.getFieldsInSection(): Invalid Frappe form object provided.");
 			return {};
 		}
@@ -185,7 +192,7 @@ const Utils = (function () {
 		let collectFields = false;
 		let sectionFound = false;
 
-		frm.meta.fields.forEach(function (field) {
+		frm.meta.fields.forEach(field => {
 			if (field.fieldtype === "Section Break") {
 				if (field.fieldname === sectionFieldName) {
 					sectionFound = true;
@@ -201,9 +208,9 @@ const Utils = (function () {
 		});
 
 		if (!sectionFound) {
-			console.warn("Utils.getFieldsInSection(): Section with fieldname \"" + sectionFieldName + "\" not found.");
+			console.warn(`Utils.getFieldsInSection(): Section with fieldname "${sectionFieldName}" not found.`);
 		} else if (fieldsInSection.length === 0) {
-			console.warn("Utils.getFieldsInSection(): No fields found in section \"" + sectionFieldName + "\".");
+			console.warn(`Utils.getFieldsInSection(): No fields found in section "${sectionFieldName}".`);
 		}
 		return { fields: fieldsInSection, json: fieldsInSectionJSON };
 	}
