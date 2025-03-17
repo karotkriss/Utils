@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, and workflow tranistions and action interception.,
  * automatically operating on the global cur_frm.
  *
- * @version 0.11.0
+ * @version 0.12.0
  * 
  * @module Utils
  */
@@ -571,68 +571,78 @@ const Utils = (function () {
 	};
 
 	/**
-	 * Determines if there is a next tab in the current form.
+	 * Determines if the current tab has a next tab.
 	 *
-	 * @returns {Object} An object with properties:
-	 *   - hasNext {boolean} True if a next tab exists.
-	 *   - nextTabFieldname {string|null} The fieldname of the next tab, or null.
+	 *
+	 * @returns {{hasNext: boolean, nextTab: string|null}} An object containing:
+	 *   - hasNext: True if a next tab exists.
+	 *   - nextTab: The fieldname of the next tab, or null.
+	 *
+	 * @example
+	 * const { hasNext, nextTab } = hasNextTab();
+	 * if (hasNext) {
+	 *   console.log("Next tab:", nextTab);
+	 * }
 	 */
-	function hasNextTab() {
-		const frm = cur_frm;
-		const tabsData = getTabs(true);
-		const tabs = tabsData.tabs;
+	const hasNextTab = () => {
+		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
 			console.warn("Utils.hasNextTab(): No tabs found in the form.");
-			return { hasNext: false };
+			return { hasNext: false, nextTab: null };
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
 			console.warn("Utils.hasNextTab(): No active tab found.");
-			return { hasNext: false };
+			return { hasNext: false, nextTab: null };
 		}
-		const currentTabFieldname = activeTabLink.data("fieldname");
-		const currentTabIndex = tabs.indexOf(currentTabFieldname);
+		const currentTab = activeTabLink.data("fieldname");
+		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
 			console.warn("Utils.hasNextTab(): Current tab not found in the list of tabs.");
-			return { hasNext: false };
+			return { hasNext: false, nextTab: null };
 		}
 		const nextTabIndex = currentTabIndex + 1;
 		return {
 			hasNext: nextTabIndex < tabs.length,
-			nextTabFieldname: tabs[nextTabIndex] || null
+			nextTab: tabs[nextTabIndex] || null
 		};
 	}
 
 	/**
-	 * Determines if there is a previous tab in the current form.
+	 * Determines if the current tab has a next tab
 	 *
-	 * @returns {Object} An object with properties:
-	 *   - hasPrevious {boolean} True if a previous tab exists.
-	 *   - previousTabFieldname {string|null} The fieldname of the previous tab, or null.
+	 *
+	 * @returns {{hasPrevious: boolean, previousTab: string|null}} An object containing:
+	 *   - hasPrevious: True if a previous tab exists.
+	 *   - previousTab: The fieldname of the previous tab, or null.
+	 *
+	 * @example
+	 * const { hasPrevious, previousTab } = hasPreviousTab();
+	 * if (hasPrevious) {
+	 *   console.log("Previous tab:", previousTab);
+	 * }
 	 */
-	function hasPreviousTab() {
-		const frm = cur_frm;
-		const tabsData = getTabs(true);
-		const tabs = tabsData.tabs;
+	const hasPreviousTab = () => {
+		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
 			console.warn("Utils.hasPreviousTab(): No tabs found in the form.");
-			return { hasPrevious: false };
+			return { hasPrevious: false, previousTab: null };
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
 			console.warn("Utils.hasPreviousTab(): No active tab found.");
-			return { hasPrevious: false };
+			return { hasPrevious: false, previousTab: null };
 		}
-		const currentTabFieldname = activeTabLink.data("fieldname");
-		const currentTabIndex = tabs.indexOf(currentTabFieldname);
+		const currentTab = activeTabLink.data("fieldname");
+		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
 			console.warn("Utils.hasPreviousTab(): Current tab not found in the list of tabs.");
-			return { hasPrevious: false };
+			return { hasPrevious: false, previousTab: null };
 		}
 		const previousTabIndex = currentTabIndex - 1;
 		return {
 			hasPrevious: previousTabIndex >= 0,
-			previousTabFieldname: tabs[previousTabIndex] || null
+			previousTab: tabs[previousTabIndex] || null
 		};
 	}
 
@@ -829,71 +839,6 @@ const Utils = (function () {
 		});
 	}
 
-	/**
-	 * Determines if there is a next tab in the current form.
-	 *
-	 * @returns {Object} An object with properties:
-	 *   - hasNext {boolean} True if a next tab exists.
-	 *   - nextTabFieldname {string|null} The fieldname of the next tab, or null.
-	 */
-	function hasNextTab() {
-		const frm = cur_frm;
-		const tabsData = Utils.getTabs(true);
-		const tabs = tabsData.tabs;
-		if (tabs.length === 0) {
-			console.warn("Utils.hasNextTab(): No tabs found in the form.");
-			return { hasNext: false };
-		}
-		const activeTabLink = $("#form-tabs li a.active");
-		if (!activeTabLink.length) {
-			console.warn("Utils.hasNextTab(): No active tab found.");
-			return { hasNext: false };
-		}
-		const currentTabFieldname = activeTabLink.data("fieldname");
-		const currentTabIndex = tabs.indexOf(currentTabFieldname);
-		if (currentTabIndex === -1) {
-			console.warn("Utils.hasNextTab(): Current tab not found in the list of tabs.");
-			return { hasNext: false };
-		}
-		const nextTabIndex = currentTabIndex + 1;
-		return {
-			hasNext: nextTabIndex < tabs.length,
-			nextTabFieldname: tabs[nextTabIndex] || null
-		};
-	}
-
-	/**
-	 * Determines if there is a previous tab in the current form.
-	 *
-	 * @returns {Object} An object with properties:
-	 *   - hasPrevious {boolean} True if a previous tab exists.
-	 *   - previousTabFieldname {string|null} The fieldname of the previous tab, or null.
-	 */
-	function hasPreviousTab() {
-		const frm = cur_frm;
-		const tabsData = Utils.getTabs(true);
-		const tabs = tabsData.tabs;
-		if (tabs.length === 0) {
-			console.warn("Utils.hasPreviousTab(): No tabs found in the form.");
-			return { hasPrevious: false };
-		}
-		const activeTabLink = $("#form-tabs li a.active");
-		if (!activeTabLink.length) {
-			console.warn("Utils.hasPreviousTab(): No active tab found.");
-			return { hasPrevious: false };
-		}
-		const currentTabFieldname = activeTabLink.data("fieldname");
-		const currentTabIndex = tabs.indexOf(currentTabFieldname);
-		if (currentTabIndex === -1) {
-			console.warn("Utils.hasPreviousTab(): Current tab not found in the list of tabs.");
-			return { hasPrevious: false };
-		}
-		const previousTabIndex = currentTabIndex - 1;
-		return {
-			hasPrevious: previousTabIndex >= 0,
-			previousTabFieldname: tabs[previousTabIndex] || null
-		};
-	}
 
 	/**
 	 * Retrieves and returns an array of allowed workflow action names for the current form.
