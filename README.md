@@ -69,7 +69,6 @@ This module is especially useful in custom Frappe apps, helping you build dynami
 Reference the `jsdelivr` in your Frappe app’s `hooks.py` to load it on your pages:
 
 ```python
-
 app_include_js = [
 	"https://cdn.jsdelivr.net/gh/karotkriss/Utils@latest/utils.js",
 	# Other JS files can be included here
@@ -89,7 +88,6 @@ app_include_js = [
 	This creates a new folder called utils in the public folder that contains the Utils.js module.
 2. **Add Utils.js as a Subtree:**
 	```bash
-
 	git subtree add --prefix=path/to/public/js/folder/utils https://github.com/karotkriss/Utils.git master --squash
 
 	```
@@ -161,7 +159,7 @@ console.log("Field Definitions:", json);
 // Check mandatory fields; returns an array of missing fields or true if all are filled.
 const missing = checkMandatory({ fields: ["first_name", "last_name"] });
 if (missing !== true) {
-	console.warn("Missing fields:", missing);
+  console.warn("Missing fields:", missing);
 }
 
 ```
@@ -181,9 +179,9 @@ Utils.changeWorkflowState({ newState: "Approved", currentStateCheck: "Pending" }
 ```javascript
 // Set fields "first_name" and "last_name" as readonly, but preserve those already readonly.
 Utils.makeReadOnly({
-	fields: ["first_name", "last_name"],
-	preserveReadonly: true,
-	debug: true
+  fields: ["first_name", "last_name"],
+  preserveReadonly: true,
+  debug: true
 });
 
 ```
@@ -251,27 +249,27 @@ Utils.addTabButtons({ saveTabs: ['*'] });
 ```javascript
 // Add navigation buttons to tabs with custom configurations
 Utils.addTabButtons({
-	buttons: [
-    	{
-			tab: 'final_tab',
-			workflowStates: ['Processing Application'],
-			label: 'Submit Form',
-			variant: 'Secondary',
-			conditional: function(cur_frm) { return cur_frm.doc.approved === true; },
-			callback: function(frm, tab) {
-				console.log('Submit Form button clicked on tab ' + tab);
-			}
-    	},
-    	{
-    		tab: 'review_tab',
-    		workflowStates: ['Draft'],
-    		label: 'Review & Save',
-    		variant: 'Destructive',
-    		callback: function(frm, tab) {
-    			console.log('Review & Save button clicked on tab ' + tab);
-    		}
-    	}
-	]
+  buttons: [
+    {
+      tab: 'final_tab',
+      workflowStates: ['Processing Application'],
+      label: 'Submit Form',
+      variant: 'Secondary',
+      conditional: function(cur_frm) { return cur_frm.doc.approved === true; },
+      callback: function(frm, tab) {
+        console.log('Submit Form button clicked on tab ' + tab);
+      }
+    },
+    {
+      tab: 'review_tab',
+      workflowStates: ['Draft'],
+      label: 'Review & Save',
+      variant: 'Destructive',
+      callback: function(frm, tab) {
+        console.log('Review & Save button clicked on tab ' + tab);
+      }
+    }
+  ]
 });
 
 ```
@@ -283,13 +281,13 @@ Utils.addTabButtons({
 // Determine if there is a next tab
 const { hasNext, nextTab } = hasNextTab();
 if (hasNext) {
-	console.log("Next tab:", nextTab);
+  console.log("Next tab:", nextTab);
 }
 
 // Determine if there is a previous tab
 const { hasPrevious, previousTab } = hasPreviousTab();
 if (hasPrevious) {
-	console.log("Previous tab:", previousTab);
+  console.log("Previous tab:", previousTab);
 }
 
 ```
@@ -321,13 +319,13 @@ Utils.action('action name', {debug: true});
 ```javascript
 // Intercept "Submit" action with confirmation dialog and update a counter
 Utils.action.confirm({
-	action: "Submit",
-	message: "Are you sure you want to submit this document?",
-	debug: true,
-	updateField: {
-		field: "revision_count",
-		value: cur_frm.doc.revision_count + 1
-	}
+  action: "Submit",
+  message: "Are you sure you want to submit this document?",
+  debug: true,
+  updateField: {
+    field: "revision_count",
+    value: cur_frm.doc.revision_count + 1
+  }
 });
 
 ```
