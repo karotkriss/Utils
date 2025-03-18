@@ -234,8 +234,7 @@ Util.addTabButtons()
 
 ```
 #### Saving and navigation
-```
-
+``` javascript
 // Add navigation buttons that also save your progress in the forms on specified tabs
 Utils.addTabButtons({ saveTabs: ['personal_details', 'professional_profile'] });
 
@@ -245,7 +244,6 @@ Utils.addTabButtons({ saveTabs: ['*'] });
 ```
 
 #### Replace the next button with custom buttons
-
 ```javascript
 // Add navigation buttons to tabs with custom configurations
 Utils.addTabButtons({
