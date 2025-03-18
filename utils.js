@@ -409,21 +409,21 @@ const Utils = (function () {
 	 * Hides or shows specified fields in the current form based on the workflow state.
 	 *
 	 * @param {Object} props - The configuration object.
-	 * @param {string[]} props.fieldsToHide - Array of field names to hide.
+	 * @param {string[]} props.fields - Array of field names to hide.
 	 * @param {string[]} [props.exceptionStates=[]] - Array of workflow states during which the fields remain visible.
 	 *
 	 * @example
 	 * // Hide fields "phone" and "email" unless the workflow state is "Draft"
-	 * hideFields({ fieldsToHide: ["phone", "email"], exceptionStates: ["Draft"] });
+	 * hideFields({ fields: ["phone", "email"], exceptionStates: ["Draft"] });
 	 */
-	const hideFields = ({ fieldsToHide = [], exceptionStates = [] } = {}) => {
+	const hideFields = ({ fields = [], exceptionStates = [] } = {}) => {
 		const frm = cur_frm;
 		if (!frm?.doc || !frm.fields_dict) {
 			console.warn("Utils.hideFields(): Invalid Frappe form object provided.");
 			return [];
 		}
 		const isExceptionState = exceptionStates.includes(frm.doc.workflow_state);
-		fieldsToHide.forEach(field => {
+		fields.forEach(field => {
 			if (frm.fields_dict[field]) {
 				frm.set_df_property(field, "hidden", isExceptionState ? 0 : 1);
 				frm.refresh_field(field);
