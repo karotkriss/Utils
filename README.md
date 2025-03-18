@@ -1,23 +1,19 @@
 <div align="center" style="padding-bottom: 2rem;">
-  <a href="https://github.com/karotkriss/Utils" style="padding bottom: 3rem;">
-    <img src="images/icons/utils-icon-black.png" alt="Logo" style="width: 192px; padding: 2rem">
-  </a>
+	<a href="https://github.com/karotkriss/Utils" style="padding bottom: 3rem;">
+		<img src="images/icons/utils-icon-black.png" alt="Logo" style="width: 192px; padding: 2rem">
+	</a>
 
-  <h1 align="center">Utils JS API for Frappe/ERPNEXT</h1>
+<h1 align="center">Utils JS API for Frappe/ERPNEXT</h1>
 
-  <div align="center">
-    Easily interact with frappe's frm object and improve UX with tab Navigations
-    <br>
-    <br>
-    <div style="text-align: justify; text-justify: inter-word;">
-		Utils.js is a collection of utility functions for Frappe forms. It simplifies common tasks such as form navigation, field management, and validation by automatically operating on the global `cur_frm`. Whether you’re just starting out or an experienced developer, Utils.js offers a comprehensive API to help you build cleaner and more user-friendly Frappe applications.
-    </div>
-  </div>
+<div align="center">
+	Easily interact with frappe's frm object and improve UX with tab Navigations
+	<br>
+	<br>
+	<div style="text-align: justify; text-justify: inter-word;">
+	Utils.js is a collection of utility functions for Frappe forms. It simplifiescommon tasks such as form navigation, field management, and validation byautomatically operating on the global `cur_frm`. Whether you’re just startingout or an experienced developer, Utils.js offers a comprehensive API to helpyou build cleaner and more user-friendly Frappe applications.
+	</div>
 </div>
-
-
-
-
+</div>
 
 ---
 
@@ -27,11 +23,12 @@
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Field Retrieval & Management](#field-retrieval--management)
-  - [Form Validation](#form-validation)
-  - [Workflow & Read-Only Handling](#workflow--read-only-handling)
-  - [Form Navigation](#form-navigation)
-  - [Tab Buttons & Navigation Helpers](#tab-buttons--navigation-helpers)
+	- [Field Retrieval & Management](#field-retrieval--management)
+	- [Form Validation](#form-validation)
+	- [Workflow & Read-Only Handling](#workflow--read-only-handling)
+	- [Form Navigation](#form-navigation)
+	- [Tab Buttons & Navigation Helpers](#tab-buttons--navigation-helpers)
+	- [Actions and Action Interception](#actions-and-action-interception)
 - [API Reference](#api-reference)
 - [Contributing](#contributing)
 <!-- - [License](#license) -->
@@ -46,6 +43,7 @@ Utils.js provides a suite of helper functions that simplify working with Frappe 
 - Change workflow states.
 - Toggle fields as read-only or hidden based on conditions.
 - Assist in navigating between tabs and adding navigation buttons.
+- Intercept workflow actions allowing you to prompt users among other things.
 
 This module is especially useful in custom Frappe apps, helping you build dynamic and responsive forms with less code.
 
@@ -60,7 +58,7 @@ This module is especially useful in custom Frappe apps, helping you build dynami
 - **Form Navigation:** Scroll to specific tabs or navigate between them with built-in methods.
 - **Custom Tab Buttons:** Automatically add navigation buttons (Previous/Next or custom) to each tab pane.
 - **Helper Methods:** Determine if there’s a next or previous tab.
-- **Action Interception:** Intercept workflow actions allowing you to prompt users among other things.
+- **Action Interception:** Intercept workflow actions allowing you to prompt users.
 
 ---
 
@@ -71,26 +69,29 @@ This module is especially useful in custom Frappe apps, helping you build dynami
 Reference the `jsdelivr` in your Frappe app’s `hooks.py` to load it on your pages:
 
 ```python
+
 app_include_js = [
-    "https://cdn.jsdelivr.net/gh/karotkriss/Utils@master/utils.js",
-    # Other JS files can be included here
+	"https://cdn.jsdelivr.net/gh/karotkriss/Utils@latest/utils.js",
+	# Other JS files can be included here
 ]
+
 ```
 ### Method 2: Git Subtree ()
 
 #### Adding Utils.js as a Git Subtree
 
 1. **Navigate to Your App’s root:**
-
 	```bash
-   	cd path/to/your_apps/root/directory
+	cd path/to/your_apps/root/directory
+
 	```
 
 	This creates a new folder called utils in the public folder that contains the Utils.js module.
 2. **Add Utils.js as a Subtree:**
-
 	```bash
+
 	git subtree add --prefix=path/to/public/js/folder/utils https://github.com/karotkriss/Utils.git master --squash
+
 	```
 
 
@@ -99,10 +100,12 @@ app_include_js = [
 Reference the Utils.js file in your Frappe app’s `hooks.py` to load it on your pages:
 
 ```python
+
 app_include_js = [
-    "/assets/your_app/js/utils/utils.js",
-    # Other JS files can be included here
+	"/assets/your_app/js/utils/utils.js",
+	# Other JS files can be included here
 ]
+
 ```
 
 ---
@@ -117,33 +120,36 @@ Utils.js is intended for use in any client script of your Frappe forms. Below ar
 
 ```javascript
 // Retrieves tabs from the form (excluding hidden ones if specified)
-const tabsData = Utils.getTabs(true);
-console.log("Tabs:", tabsData.tabs);
-console.log("Tabs Mapping:", tabsData.json);
+const { tabs, json } = getTabs({ excludeHidden: true });
+console.log("Tabs:", tabs);
+console.log("Tab Definitions:", json);
 
 ```
 
 #### Get Fields in a Tab
 ```javascript
 // Retrieves all fieldnames in a specified tab (e.g., "details_tab")
-const fieldsData = Utils.getFieldsInTab("details_tab");
-console.log("Fields in tab:", fieldsData.fields);
+const { fields, json } = Utils.getFieldsInTab({ tab: "details_tab" });
+console.log("Fields in tab:", fields);
+console.log("Field definitions:", json);
 
 ```
 
 #### Get Fields in a Section
 ```javascript
 // Retrieves all fields in a section with a given fieldname
-const sectionData = Utils.getFieldsInSection("contact_section");
-console.log("Section fields:", sectionData.fields);
+const { fields, json } = Utils.getFieldsInSection({ section: "contact_section" });
+console.log("Section Fields:", fields);
+console.log("Field Definitions:", json);
 
 ```
 
 #### Get Fields in a Column
 ```javascript
 // Retrieves all fields in a column with a given fieldname
-const columnData = Utils.getFieldsInColumn("address_column");
-console.log("Column fields:", columnData.fields);
+const { fields, json } = Utils.getFieldsInColumn({ column: "address_column" });
+console.log("Column Fields:", fields);
+console.log("Field Definitions:", json);
 
 ```
 
@@ -153,9 +159,9 @@ console.log("Column fields:", columnData.fields);
 
 ```javascript
 // Check mandatory fields; returns an array of missing fields or true if all are filled.
-const missing = Utils.checkMandatory(["first_name", "email"]);
+const missing = checkMandatory({ fields: ["first_name", "last_name"] });
 if (missing !== true) {
-  console.warn("Missing fields:", missing);
+	console.warn("Missing fields:", missing);
 }
 
 ```
@@ -165,25 +171,28 @@ if (missing !== true) {
 #### Change Workflow State
 
 ```javascript
-
-// Change the workflow state, optionally checking the current state.
-Utils.changeWorkflowState("Approved", "Draft");
+// Change the workflow state, optionally checking the current state against a specified state.
+Utils.changeWorkflowState({ newState: "Approved", currentStateCheck: "Pending" });
 
 ```
 
 #### Make Fields Read-Only
 
 ```javascript
-// Set specific fields as read-only, except during certain workflow states.
-Utils.makeReadOnly(["first_name", "email"], ["Draft"]);
+// Set fields "first_name" and "last_name" as readonly, but preserve those already readonly.
+Utils.makeReadOnly({
+	fields: ["first_name", "last_name"],
+	preserveReadonly: true,
+	debug: true
+});
 
 ```
 
 #### Hide Fields
 
 ```javascript
-// Hide specific fields unless the form is in an exception state.
-Utils.hideFields(["internal_note"], ["Draft"]);
+// Hide fields "phone" and "email" unless the workflow state is "Draft"
+Utils.hideFields({ fields: ["phone", "email"], exceptionStates: ["Draft"] });
 
 ```
 
@@ -191,8 +200,8 @@ Utils.hideFields(["internal_note"], ["Draft"]);
 
 #### Go To Tab
 ```javascript
-// Navigate to a specified tab
-Utils.goToTab("details_tab");
+// Navigate to the tab with fieldname "details_tab"
+Utils.goToTab({ tab: "details_tab" });
 ```
 
 #### Navigate to Next or Previous Tab
@@ -202,7 +211,6 @@ Utils.goToTab.next();
 
 // Navigate to the previous tab
 Utils.goToTab.previous();
-
 ```
 
 #### Save and Navigate
@@ -228,7 +236,8 @@ Util.addTabButtons()
 
 ```
 #### Saving and navigation
-```javascript
+```
+
 // Add navigation buttons that also save your progress in the forms on specified tabs
 Utils.addTabButtons({ saveTabs: ['personal_details', 'professional_profile'] });
 
@@ -242,27 +251,27 @@ Utils.addTabButtons({ saveTabs: ['*'] });
 ```javascript
 // Add navigation buttons to tabs with custom configurations
 Utils.addTabButtons({
-  buttons: [
-    {
-      tab: 'final_tab',
-      workflowStates: ['Processing Application'],
-      label: 'Submit Form',
-      variant: 'Secondary',
-      conditional: function(cur_frm) { return cur_frm.doc.approved === true; },
-      callback: function(frm, tab) {
-        console.log('Submit Form button clicked on tab ' + tab);
-      }
-    },
-    {
-      tab: 'review_tab',
-      workflowStates: ['Draft'],
-      label: 'Review & Save',
-      variant: 'Destructive',
-      callback: function(frm, tab) {
-        console.log('Review & Save button clicked on tab ' + tab);
-      }
-    }
-  ]
+buttons: [
+{
+tab: 'final_tab',
+workflowStates: ['Processing Application'],
+label: 'Submit Form',
+variant: 'Secondary',
+conditional: function(cur_frm) { return cur_frm.doc.approved === true; },
+callback: function(frm, tab) {
+console.log('Submit Form button clicked on tab ' + tab);
+}
+},
+{
+tab: 'review_tab',
+workflowStates: ['Draft'],
+label: 'Review \& Save',
+variant: 'Destructive',
+callback: function(frm, tab) {
+console.log('Review \& Save button clicked on tab ' + tab);
+}
+}
+]
 });
 
 ```
@@ -270,16 +279,17 @@ Utils.addTabButtons({
 #### Check for Next/Previous Tabs
 
 ```javascript
+
 // Determine if there is a next tab
-const nextInfo = Utils.hasNextTab();
-if (nextInfo.hasNext) {
-  console.log("Next tab:", nextInfo.nextTabFieldname);
+const { hasNext, nextTab } = hasNextTab();
+if (hasNext) {
+	console.log("Next tab:", nextTab);
 }
 
 // Determine if there is a previous tab
-const prevInfo = Utils.hasPreviousTab();
-if (prevInfo.hasPrevious) {
-  console.log("Previous tab:", prevInfo.previousTabFieldname);
+const { hasPrevious, previousTab } = hasPreviousTab();
+if (hasPrevious) {
+	console.log("Previous tab:", previousTab);
 }
 
 ```
@@ -298,6 +308,7 @@ console.log(actionNames);
 #### Action Availability
 
 ```javascript
+
 // check if a specific action is available
 Utils.action('action name', {debug: true});
 
@@ -308,62 +319,18 @@ Utils.action('action name', {debug: true});
 ##### Confirm
 
 ```javascript
-// Attaching a confirmation prompt to the "Approve" action.
-const approveAction = Utils.action("Approve", { debug: true });
-if (approveAction) {
-  approveAction.confirm({
-    message: "Are you sure you want to approve this document?",
-    onConfirm: (continueAction) => {
-      console.log("Approval confirmed.");
-      continueAction();
-    },
-    onCancel: () => {
-      console.log("Approval cancelled.");
-    },
-    debug: true
-  });
-}
-```
-
-#### Warn
-
-```javascript
-// Attaching a warning prompt to the "Delete" action using frappe.warn.
-const deleteAction = Utils.action("Delete", { debug: true });
-if (deleteAction) {
-  deleteAction.warn({
-    title: "Warning",
-    message: "This will permanently delete the document. Continue?",
-    onConfirm: (continueAction) => {
-      console.log("Deletion warning confirmed.");
-      continueAction();
-    },
-    onCancel: () => {
-      console.log("Deletion warning cancelled.");
-    },
-    debug: true
-  });
-}
+// Intercept "Submit" action with confirmation dialog and update a counter
+Utils.action.confirm({
+	action: "Submit",
+	message: "Are you sure you want to submit this document?",
+	debug: true,
+	updateField: {
+		field: "revision_count",
+		value: cur_frm.doc.revision_count + 1
+	}
+});
 
 ```
-
-#### Throw
-
-```javascript
-// Attaching a conditional throw to the "Submit" action.
-// If the document is not complete (i.e., conditional returns false), an error is thrown.
-const submitAction = Utils.action("Submit", { debug: true });
-if (submitAction) {
-  submitAction.throw({
-    title: "Error",
-    message: "Submission is not allowed because the document is incomplete.",
-    conditional: (frm) => frm.doc.is_complete === true,
-    debug: true
-  });
-}
-
-```
-
 
 ---
 
