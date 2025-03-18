@@ -252,7 +252,7 @@ Utils.addTabButtons({
       tab: 'final_tab',
       workflowStates: ['Processing Application'],
       label: 'Submit Form',
-      variant: 'Secondary',
+      variant: 'secondary',
       conditional: function(cur_frm) { return cur_frm.doc.approved === true; },
       callback: function(frm, tab) {
         console.log('Submit Form button clicked on tab ' + tab);
@@ -262,7 +262,7 @@ Utils.addTabButtons({
       tab: 'review_tab',
       workflowStates: ['Draft'],
       label: 'Review & Save',
-      variant: 'Destructive',
+      variant: 'destructive',
       callback: function(frm, tab) {
         console.log('Review & Save button clicked on tab ' + tab);
       }

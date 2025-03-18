@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow tranistions, action interception and instance information.,
  * automatically operating on the global cur_frm.
  *
- * @version 1.1.2
+ * @version 1.2.0
  * 
  * @module Utils
  */
@@ -730,7 +730,7 @@ const Utils = (function () {
 	 *       tab: 'review_tab',
 	 *       workflowStates: ['Draft'],
 	 *       label: 'Review & Save',
-	 *       variant: 'Destructive',
+	 *       variant: 'destructive',
 	 *       callback: function(frm, tab) {
 	 *         console.log('Review & Save button clicked on tab ' + tab);
 	 *       }
@@ -746,11 +746,11 @@ const Utils = (function () {
 		}
 		// Mapping for variant to CSS class.
 		const variantMapping = {
-			Primary: "btn-primary",
-			Secondary: "btn-secondary",
-			Destructive: "btn-danger",
-			Outline: "btn-outline",
-			Ghost: "btn-ghost"
+			primary: "btn-primary",
+			secondary: "btn-secondary",
+			destructive: "btn-danger",
+			outline: "btn-outline",
+			ghost: "btn-ghost"
 		};
 
 		const frm = cur_frm;
