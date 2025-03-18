@@ -6,11 +6,11 @@
 <h1 align="center">Utils JS API for Frappe/ERPNEXT</h1>
 
 <div align="center">
-	Easily interact with frappe's frm object and improve UX with tab Navigations
+	Easily interact with frappe's form object and improve UX with tab Navigations
 	<br>
 	<br>
 	<div style="text-align: justify; text-justify: inter-word;">
-	Utils.js is a collection of utility functions for Frappe forms. It simplifiescommon tasks such as form navigation, field management, and validation byautomatically operating on the global `cur_frm`. Whether you’re just startingout or an experienced developer, Utils.js offers a comprehensive API to helpyou build cleaner and more user-friendly Frappe applications.
+	Utils.js is a collection of utility functions for Frappe forms. It simplifiescommon tasks such as form navigation, field management, and validation byautomatically operating on the global `cur_frm`. Whether you’re just startingout or an experienced developer, Utils.js offers a comprehensive API to help you build cleaner and more user-friendly Frappe applications.
 	</div>
 </div>
 </div>
@@ -29,6 +29,7 @@
 	- [Form Navigation](#form-navigation)
 	- [Tab Buttons & Navigation Helpers](#tab-buttons--navigation-helpers)
 	- [Actions and Action Interception](#actions-and-action-interception)
+	- [Workflow and Transition Definitions](#workflow-and-transition-definitions)
 - [API Reference](#api-reference)
 - [Contributing](#contributing)
 <!-- - [License](#license) -->
@@ -301,20 +302,16 @@ console.log(actionNames);
 
 ```
 
-#### Action Availability
-
-```javascript
-
-// check if a specific action is available
-Utils.action('action name', {debug: true});
-
-```
-
 #### Action interception
 
 ##### Confirm
 
 ```javascript
+// Require the user to confirm they want to perform an action
+Utils.action.confirm({
+  action: "Submit"
+})
+
 // Intercept "Submit" action with confirmation dialog and update a counter
 Utils.action.confirm({
   action: "Submit",
@@ -327,6 +324,25 @@ Utils.action.confirm({
 });
 
 ```
+### Workflow and Transition Definitions
+
+#### Get valid tranistions for the form's current state
+```javascript
+const transitions = Utils.getWorkflowTransitions();
+transitions.forEach(transition => {
+  console.log(`Action: ${transition.action}, Next State: ${transition.next_state}`);
+});
+
+```
+#### Get all transition for the current form
+```javascript
+const allTransitions = Utils.getAllWorkflowTransitions();
+allTransitions.forEach(transition => {
+  console.log(`Action: ${transition.action}, From State: ${transition.state}, To State: ${transition.next_state}`);
+});
+
+```
+
 
 ---
 

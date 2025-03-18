@@ -982,7 +982,21 @@ const Utils = (function () {
 
 	/**
 	 * Get possible workflow transitions from the current state for the loaded document
-	 * @returns {Array} - Array of possible transitions from current state with their allowed roles
+	 * 
+	 * @function
+	 * 
+	 * @returns {Array.<Object>} Array of transition objects. Each object has the following properties:
+	 *   - action {string} The name of the workflow action.
+	 *   - next_state {string} The state the workflow will transition to if the action is executed.
+	 *   - allowed_roles {Array.<string>} Array of role names that are allowed to perform this action.
+	 *   - condition {string} The condition (if any) associated with the transition.
+	 *   - state {string} The current workflow state for which this transition is applicable.
+	 *
+	 * @example
+	 * const transitions = Utils.getWorkflowTransitions();
+	 * transitions.forEach(transition => {
+	 *   console.log(`Action: ${transition.action}, Next State: ${transition.next_state}`);
+	 * });
 	 */
 	function getWorkflowTransitions() {
 		try {
@@ -1037,7 +1051,21 @@ const Utils = (function () {
 
 	/**
 	 * Get all workflow transitions defined for a DocType
-	 * @returns {Array} - Array of all workflow transitions with their allowed roles
+	 * 
+	 * 
+	 * @function
+	 * @returns {Array.<Object>} Array of transition objects. Each object has the following properties:
+	 *   - action {string} The name of the workflow action.
+	 *   - next_state {string} The state that will be set when the action is executed.
+	 *   - state {string} The workflow state from which the transition is available.
+	 *   - allowed_roles {Array.<string>} Array of role names permitted to perform this transition.
+	 *   - condition {string} A condition (if any) that must be met for the transition.
+	 *
+	 * @example
+	 * const allTransitions = Utils.getAllWorkflowTransitions();
+	 * allTransitions.forEach(transition => {
+	 *   console.log(`Action: ${transition.action}, From State: ${transition.state}, To State: ${transition.next_state}`);
+	 * });
 	 */
 	function getAllWorkflowTransitions() {
 		try {
