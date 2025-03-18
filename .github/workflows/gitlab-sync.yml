@@ -1,0 +1,26 @@
+name: Sync to GitLab
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync-to-gitlab:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout GitHub Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to GitLab
+        run: |
+          git config --global user.name "${{ secrets.GITLAB_NAME }}"
+          git config --global user.email "${{ secrets.GITLAB_EMAIL }}"
+
+          GITLAB_REPO="https://${{ secrets.GITLAB_USERNAME }}:${{ secrets.GITLAB_ACCESS_TOKEN }}@dev.egov.gy/dev-tools/utils.git"
+          git remote add gitlab $GITLAB_REPO
+          git fetch --all
+          git push --force --mirror gitlab
