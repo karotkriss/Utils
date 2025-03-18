@@ -77,7 +77,7 @@ const Utils = (function () {
 	 *
 	 * @example
 	 * // Retrieve tabs while excluding hidden ones
-	 * const { tabs, json } = getTabs({ excludeHidden: true });
+	 * const { tabs, json } = Utils.getTabs({ excludeHidden: true });
 	 * console.log("Tabs:", tabs);
 	 * console.log("Tab Definitions:", json);
 	 */
@@ -133,7 +133,7 @@ const Utils = (function () {
 	 *
 	 * @example
 	 * // Retrieve fields in a tab named "my_tab"
-	 * const { fields, json } = getFieldsInTab({ tab: "my_tab" });
+	 * const { fields, json } = Utils.getFieldsInTab({ tab: "my_tab" });
 	 * console.log("Fields in tab:", fields);
 	 * console.log("Field definitions:", json);
 	 */
@@ -185,7 +185,7 @@ const Utils = (function () {
 	 *
 	 * @example
 	 * // Retrieve fields in a section named "my_section"
-	 * const { fields, json } = getFieldsInSection({ sectionFieldName: "my_section" });
+	 * const { fields, json } = Utils.getFieldsInSection({ sectionFieldName: "my_section" });
 	 * console.log("Section Fields:", fields);
 	 * console.log("Field Definitions:", json);
 	 */
@@ -235,7 +235,7 @@ const Utils = (function () {
 	 *
 	 * @example
 	 * // Retrieve fields in a column named "my_column"
-	 * const { fields, json } = getFieldsInColumn({ columnFieldName: "my_column" });
+	 * const { fields, json } = Utils.getFieldsInColumn({ columnFieldName: "my_column" });
 	 * console.log("Column Fields:", fields);
 	 * console.log("Field Definitions:", json);
 	 */
@@ -283,7 +283,7 @@ const Utils = (function () {
 	 *
 	 * @example
 	 * // Check if the fields "first_name" and "last_name" are filled
-	 * const result = checkMandatory({ fields: ["first_name", "last_name"] });
+	 * const result = Utils.checkMandatory({ fields: ["first_name", "last_name"] });
 	 * if (result !== true) {
 	 *   console.log("Missing mandatory fields:", result);
 	 * }
@@ -323,7 +323,7 @@ const Utils = (function () {
 	 *
 	 * @example
 	 * // Change the workflow state to "Approved" only if the current state is "Pending"
-	 * changeWorkflowState({ newState: "Approved", currentStateCheck: "Pending" });
+	 * Utils.changeWorkflowState({ newState: "Approved", currentStateCheck: "Pending" });
 	 */
 	const changeWorkflowState = ({ newState, currentStateCheck } = {}) => {
 		const frm = cur_frm;
@@ -353,7 +353,7 @@ const Utils = (function () {
 	 *
 	 * @example
 	 * // Set fields "first_name" and "last_name" as readonly, but preserve those already readonly.
-	 * makeReadOnly({
+	 * Utils.makeReadOnly({
 	 *   fields: ["first_name", "last_name"],
 	 *   preserveReadonly: true,
 	 *   debug: true
@@ -414,7 +414,7 @@ const Utils = (function () {
 	 *
 	 * @example
 	 * // Hide fields "phone" and "email" unless the workflow state is "Draft"
-	 * hideFields({ fields: ["phone", "email"], exceptionStates: ["Draft"] });
+	 * Utils.hideFields({ fields: ["phone", "email"], exceptionStates: ["Draft"] });
 	 */
 	const hideFields = ({ fields = [], exceptionStates = [] } = {}) => {
 		const frm = cur_frm;
@@ -444,7 +444,7 @@ const Utils = (function () {
 	 *
 	 * @example
 	 * // Navigate to the tab with fieldname "details_tab"
-	 * goToTab({ tab: "details_tab" });
+	 * Utils.goToTab({ tab: "details_tab" });
 	 */
 	const goToTab = ({ tab } = {}) => {
 		const frm = cur_frm;
@@ -542,7 +542,9 @@ const Utils = (function () {
 
 	/**
 	 * Saves the current form and then executes the given callback.
-	 *
+	 * 
+	 * @private
+	 * 
 	 * @param {string|function} tabFieldNameOrCallback - The target tab fieldname or callback function.
 	 * @param {function} callback - Callback to execute after saving.
 	 */
@@ -898,6 +900,8 @@ const Utils = (function () {
 	const action = {
 		/**
 		 * Intercepts a workflow action with a confirmation dialog.
+		 * 
+		 * @namespace Utils.action
 		 * 
 		 * @param {Object} props - Configuration options
 		 * @param {string} props.action - The workflow action name to intercept
