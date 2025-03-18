@@ -23,4 +23,5 @@ jobs:
           GITLAB_REPO="https://${{ secrets.GITLAB_USERNAME }}:${{ secrets.GITLAB_ACCESS_TOKEN }}@dev.egov.gy/dev-tools/utils.git"
           git remote add gitlab $GITLAB_REPO
           git fetch --all
-          git push --force --mirror gitlab
+          git push --force gitlab refs/heads/*:refs/heads/*
+
