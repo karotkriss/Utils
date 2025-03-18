@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2025-03-18
+
+### Fixed
+- Form Navigation
+  - variants prop adjust to take lowercase variant name instead of title case: `primary: "btn-primary"`, `secondary: "btn-secondary"`, `destructive: "btn-danger"`, `outline: "btn-outline"`, `ghost: "btn-ghost"`
+
 ## [1.1.1] - 2025-03-17
 
 ### Added
