@@ -251,27 +251,27 @@ Utils.addTabButtons({ saveTabs: ['*'] });
 ```javascript
 // Add navigation buttons to tabs with custom configurations
 Utils.addTabButtons({
-buttons: [
-{
-tab: 'final_tab',
-workflowStates: ['Processing Application'],
-label: 'Submit Form',
-variant: 'Secondary',
-conditional: function(cur_frm) { return cur_frm.doc.approved === true; },
-callback: function(frm, tab) {
-console.log('Submit Form button clicked on tab ' + tab);
-}
-},
-{
-tab: 'review_tab',
-workflowStates: ['Draft'],
-label: 'Review \& Save',
-variant: 'Destructive',
-callback: function(frm, tab) {
-console.log('Review \& Save button clicked on tab ' + tab);
-}
-}
-]
+	buttons: [
+    	{
+			tab: 'final_tab',
+			workflowStates: ['Processing Application'],
+			label: 'Submit Form',
+			variant: 'Secondary',
+			conditional: function(cur_frm) { return cur_frm.doc.approved === true; },
+			callback: function(frm, tab) {
+				console.log('Submit Form button clicked on tab ' + tab);
+			}
+    	},
+    	{
+    		tab: 'review_tab',
+    		workflowStates: ['Draft'],
+    		label: 'Review & Save',
+    		variant: 'Destructive',
+    		callback: function(frm, tab) {
+    			console.log('Review & Save button clicked on tab ' + tab);
+    		}
+    	}
+	]
 });
 
 ```
