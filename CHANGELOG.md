@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] - 2025-03-18
+
+### Added
+- Form Navigation
+  - New `className` prop: Allows for additional classes to be specified for the tab buttons
+
 ## [1.2.0] - 2025-03-18
 
 ### Fixed

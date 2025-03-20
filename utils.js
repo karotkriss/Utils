@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow tranistions, action interception and instance information.,
  * automatically operating on the global cur_frm.
  *
- * @version 1.2.0
+ * @version 1.3.0
  * 
  * @module Utils
  */
@@ -737,6 +737,10 @@ const Utils = (function () {
 	 *     }
 	 *   ]
 	 * });
+	 * 
+	 * @example
+	 * Example 5: // Add bootstrap or Custom classes to you buttons
+	 * Utils.addTabButtons({ className: 'btn btn-info special-tab-button' });
 	 */
 	function addTabButtons(props) {
 		props = props || {};
