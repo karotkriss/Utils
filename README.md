@@ -6,11 +6,11 @@
 <h1 align="center">Utils JS API for Frappe/ERPNEXT</h1>
 
 <div align="center">
-	Easily interact with frappe's form object and improve UX with tab Navigations
+	Easily interact with frappe's form object, workflows and improve UX with tab Navigations
 	<br>
 	<br>
 	<div style="text-align: justify; text-justify: inter-word;">
-	Utils.js is a collection of utility functions for Frappe forms. It simplifies common tasks such as form navigation, field management, and validation byautomatically operating on the global `cur_frm`. Whether you’re just startingout or an experienced developer, Utils.js offers a comprehensive API to help you build cleaner and more user-friendly Frappe applications.
+	Utils.js is a collection of utility functions for Frappe forms. It simplifies common tasks such as form navigation, field management, workflow management and validation by automatically operating on the global `cur_frm`. Whether you’re just starting out or an experienced developer, Utils.js offers a comprehensive API to help you build cleaner and more user-friendly Frappe applications.
 	</div>
 </div>
 </div>
@@ -296,20 +296,9 @@ if (hasPrevious) {
 
 ```
 
-### Actions and Action Interception
+### Action Interception
 
-#### Get Actions
-
-```javascript
-// Retrieve available workflow actions (e.g., "Approve", "Reject", "Cancel")
-const actionNames = Utils.getActions();
-console.log(actionNames);
-
-```
-
-#### Action interception
-
-##### Confirm
+#### Confirm
 
 ```javascript
 // Require the user to confirm they want to perform an action
@@ -329,26 +318,87 @@ Utils.action.confirm({
 });
 
 ```
-### Workflow and Transition Definitions
+### Workflow Transition and Action Retrieval
 
-#### Get valid tranistions for the form's current state
+#### Retrieve all workflow transition
 ```javascript
-const transitions = Utils.getWorkflowTransitions();
-transitions.forEach(transition => {
-  console.log(`Action: ${transition.action}, Next State: ${transition.next_state}`);
-});
-
+Utils.workflow.getAllTransitions()
 ```
-#### Get all transition for the current form
+
+Log all workflow transitions
 ```javascript
-const allTransitions = Utils.getAllWorkflowTransitions();
-allTransitions.forEach(transition => {
-  console.log(`Action: ${transition.action}, From State: ${transition.state}, To State: ${transition.next_state}`);
-});
+Utils.workflow.getAllTransitions().forEach(({ state, next_state, action }) =>
+  console.log(`${state} -> ${next_state} via ${action}`)
+);
 
 ```
 
+Check if any transitions exist
+```javascript
+const transitions = Utils.workflow.getAllTransitions();
+console.log(transitions.length ? "Transitions available." : "No transitions found.");
 
+```
+#### Retrieve Valid Transition for the Current Workflow State
+
+```javascript
+Utils.workflow.getTransitions()
+```
+
+Retrieve all transitions from the current state and log them
+```javascript
+const transitions = Utils.workflow.getTransitions();
+transitions.forEach(({ action, next_state }) => console.log(`${action} -> ${next_state}`));
+
+```
+
+Check if a `Reject` action is available
+```javascript
+const hasRejectAction = Utils.workflow.getTransitions().some(({ action }) => action === "Reject");
+console.log(hasRejectAction ? "Rejection possible." : "No rejection available.");
+
+```
+
+#### Retrieve all Future Transitions
+
+```javascript
+Utils.workflow.getFutureTransitions();
+```
+
+Log all possible future transitions
+```javascript
+Utils.workflow.getFutureTransitions().forEach(({ state, next_state, action }) =>
+  console.log(`${state} -> ${next_state} via ${action}`)
+);
+
+```
+
+Check if "Approved" is a future workflow state
+```javascript
+const isApprovalPossible = Utils.workflow.getFutureTransitions().some(({ next_state }) => next_state === "Approved");
+console.log(isApprovalPossible ? "Approval is in a future state." : "Approval not possible yet.");
+
+```
+
+#### Action Retrieval
+```javascript
+Utils.workflow.getActions()
+```
+
+Retrieve all available workflow actions and log them to the console
+```javascript
+const actions = Utils.workflow.getActions();
+console.log(actions);
+
+```
+
+Check if the "Approve" action is available
+```javascript
+if (Utils.workflow.getActions().includes("Approve")) {
+  console.log("Approval action available.");
+}
+
+```
 ---
 
 ## Contributing

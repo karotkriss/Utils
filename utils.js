@@ -2,10 +2,10 @@
  * Utils.js
  *
  * A collection of utility functions for Frappe forms.
- * This module simplifies form navigation, field management, workflow tranistions, action interception and instance information.,
+ * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 1.3.0
+ * @version 1.4.0
  * 
  * @module Utils
  */
@@ -872,6 +872,8 @@ const Utils = (function () {
 	/**
 	 * Retrieves and returns an array of allowed workflow action names for the current form.
 	 *
+	 * @deprecated This method is deprecated in favor of {@link workflow.getActions} method.
+	 *
 	 * This function uses the getWorkflowTransitions() helper to obtain the list of transitions
 	 * available from the current workflow state of the document and then maps these transitions
 	 * to extract the action names.
@@ -884,6 +886,7 @@ const Utils = (function () {
 	 * console.log(actions); // e.g. ["Approve", "Reject"]
 	 */
 	const getActions = () => {
+		console.warn('This [getActions] method is deprecated and will be removed in version 2.0.0 Please use the [workflow.getActions] method instead. ')
 		try {
 			// Get transitions for the current state using the helper.
 			const transitions = getWorkflowTransitions();
@@ -988,6 +991,8 @@ const Utils = (function () {
 	/**
 	 * Get possible workflow transitions from the current state for the loaded document
 	 * 
+	 * @deprecated This method is deprecated in favor of {@link workflow.getTransitions} method.
+	 * 
 	 * @function
 	 * 
 	 * @returns {Array.<Object>} Array of transition objects. Each object has the following properties:
@@ -1004,6 +1009,7 @@ const Utils = (function () {
 	 * });
 	 */
 	function getWorkflowTransitions() {
+		console.warn('This [getWorkflowTransitions] method is deprecated and will be removed in version 2.0.0 Please use the [workflow.getTransitions] method instead. ')
 		try {
 			if (!cur_frm || !cur_frm.doc || !cur_frm.doc.doctype) {
 				console.warn("Invalid form or missing DocType");
@@ -1057,6 +1063,7 @@ const Utils = (function () {
 	/**
 	 * Get all workflow transitions defined for a DocType
 	 * 
+	 * @deprecated This method is deprecated in favor of {@link workflow.getAllTransitions} method.
 	 * 
 	 * @function
 	 * @returns {Array.<Object>} Array of transition objects. Each object has the following properties:
@@ -1073,6 +1080,7 @@ const Utils = (function () {
 	 * });
 	 */
 	function getAllWorkflowTransitions() {
+		console.warn('This [getAllWorkflowTransitions] method is deprecated and will be removed in version 2.0.0 Please use the [workflow.getAllTransitions] method instead. ')
 		try {
 			if (!cur_frm || !cur_frm.doc || !cur_frm.doc.doctype) {
 				console.warn("Invalid form or missing DocType");
@@ -1115,6 +1123,156 @@ const Utils = (function () {
 	}
 
 	/**
+	 * Provides workflow information for the current form.
+	 * 
+	 * @namespace Utils.site
+	 * 
+	 */
+	const workflow = {
+		/**
+		 * Retrieves all allowed workflow action names for the current form.
+		 * @returns {string[]} An array of allowed workflow action names.
+		 *
+		 * @example
+		 * // Retrieve all available workflow actions and log them to the console
+		 * const actions = Utils.workflow.getActions();
+		 * console.log(actions);
+		 *
+		 * @example
+		 * // Check if the "Approve" action is available
+		 * if (Utils.workflow.getActions().includes("Approve")) {
+		 *   console.log("Approval action available.");
+		 * }
+		 */
+		getActions: () => {
+			try {
+				const transitions = workflow.getTransitions();
+				return transitions.map(({ action }) => action);
+			} catch (error) {
+				console.warn("Error in workflow.getActions:", error);
+				return [];
+			}
+		},
+
+		/**
+		 * Retrieves possible workflow transitions from the current state for the loaded document.
+		 * @returns {Array.<Object>} Array of transition objects.
+		 *
+		 * @example
+		 * // Retrieve all transitions from the current state and log them
+		 * const transitions = Utils.workflow.getTransitions();
+		 * transitions.forEach(({ action, next_state }) => console.log(`${action} -> ${next_state}`));
+		 *
+		 * @example
+		 * // Check if a "Reject" action is available
+		 * const hasRejectAction = Utils.workflow.getTransitions().some(({ action }) => action === "Reject");
+		 * console.log(hasRejectAction ? "Rejection possible." : "No rejection available.");
+		 */
+		getTransitions: () => {
+			try {
+				if (!cur_frm?.doc?.doctype) {
+					console.warn("Invalid form or missing DocType");
+					return [];
+				}
+				const { doctype, workflow_state } = cur_frm.doc;
+				if (!workflow_state) {
+					console.warn(`No workflow state found for ${doctype}`);
+					return [];
+				}
+				const transitions = cur_frm.workflow?.transitions || frappe.workflow?.workflows?.[doctype]?.transitions || [];
+				return transitions.filter(({ state }) => state === workflow_state).map(({ action = "", next_state = "", allowed, condition = "", state = "" }) => ({
+					action,
+					next_state,
+					allowed_roles: formatAllowedRoles(allowed),
+					condition,
+					state
+				}));
+			} catch (error) {
+				console.warn("Error in workflow.getTransitions:", error);
+				return [];
+			}
+		},
+
+		/**
+		 * Retrieves all workflow transitions defined for a DocType.
+		 * @returns {Array.<Object>} Array of transition objects.
+		 *
+		 * @example
+		 * // Log all possible workflow transitions
+		 * Utils.workflow.getAllTransitions().forEach(({ state, next_state, action }) =>
+		 *   console.log(`${state} -> ${next_state} via ${action}`)
+		 * );
+		 *
+		 * @example
+		 * // Check if any transitions exist
+		 * const transitions = Utils.workflow.getAllTransitions();
+		 * console.log(transitions.length ? "Transitions available." : "No transitions found.");
+		 */
+		getAllTransitions: () => {
+			try {
+				if (!cur_frm?.doc?.doctype) {
+					console.warn("Invalid form or missing DocType");
+					return [];
+				}
+				const { doctype } = cur_frm.doc;
+				const transitions = cur_frm.workflow?.transitions || frappe.workflow?.workflows?.[doctype]?.transitions || [];
+				return transitions.map(({ action = "", next_state = "", state = "", allowed, condition = "" }) => ({
+					action,
+					next_state,
+					state,
+					allowed_roles: formatAllowedRoles(allowed),
+					condition
+				}));
+			} catch (error) {
+				console.warn("Error in workflow.getAllTransitions:", error);
+				return [];
+			}
+		},
+
+		/**
+		 * Retrieves all possible future workflow transitions starting from the current state.
+		 * @returns {Array.<Object>} Array of transition objects.
+		 *
+		 * @example
+		 * // Log all possible future transitions
+		 * Utils.workflow.getFutureTransitions().forEach(({ state, next_state, action }) =>
+		 *   console.log(`${state} -> ${next_state} via ${action}`)
+		 * );
+		 *
+		 * @example
+		 * // Check if "Approved" is a future workflow state
+		 * const isApprovalPossible = Utils.workflow.getFutureTransitions().some(({ next_state }) => next_state === "Approved");
+		 * console.log(isApprovalPossible ? "Approval is in a future state." : "Approval not possible yet.");
+		 */
+		getFutureTransitions: () => {
+			try {
+				if (!cur_frm?.doc?.doctype) {
+					console.warn("Invalid form or missing DocType");
+					return [];
+				}
+				const { doctype, workflow_state } = cur_frm.doc;
+				if (!workflow_state) {
+					console.warn(`No workflow state found for ${doctype}`);
+					return [];
+				}
+				const transitions = cur_frm.workflow?.transitions || frappe.workflow?.workflows?.[doctype]?.transitions || [];
+				const futureTransitions = [];
+				const collectTransitions = (state) => {
+					transitions.filter(({ state: s }) => s === state).forEach(transition => {
+						futureTransitions.push(transition);
+						collectTransitions(transition.next_state);
+					});
+				};
+				collectTransitions(workflow_state);
+				return futureTransitions;
+			} catch (error) {
+				console.warn("Error in workflow.getFutureTransitions:", error);
+				return [];
+			}
+		}
+	};
+
+	/**
 	 * Provides site information.
 	 * @namespace Utils.site
 	 */
@@ -1154,6 +1312,7 @@ const Utils = (function () {
 		getWorkflowTransitions,
 		getActions: getActions,
 		action: action,
+		workflow: workflow,
 		site: site
 	};
 })();
