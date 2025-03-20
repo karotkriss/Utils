@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.3.0] - 2025-03-18
+## [1.3.0] - 2025-03-19
 
 ### Added
 - Form Navigation
