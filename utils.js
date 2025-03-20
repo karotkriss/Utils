@@ -1246,27 +1246,63 @@ const Utils = (function () {
 		 */
 		getFutureTransitions: () => {
 			try {
-				if (!cur_frm?.doc?.doctype) {
-					console.warn("Invalid form or missing DocType");
+				if (!cur_frm || !cur_frm.doc || !cur_frm.doc.doctype) {
+					console.warn("Utils.getFutureWorkflowTransitions(): Invalid form or missing DocType");
 					return [];
 				}
-				const { doctype, workflow_state } = cur_frm.doc;
+
+				const doctype = cur_frm.doc.doctype;
+				const workflow_state = cur_frm.doc.workflow_state;
 				if (!workflow_state) {
 					console.warn(`No workflow state found for ${doctype}`);
 					return [];
 				}
-				const transitions = cur_frm.workflow?.transitions || frappe.workflow?.workflows?.[doctype]?.transitions || [];
+
+				// Retrieve all workflow transitions
+				let transitions = [];
+				if (cur_frm.workflow && cur_frm.workflow.transitions) {
+					transitions = cur_frm.workflow.transitions;
+				} else if (frappe.workflow && frappe.workflow.workflows && frappe.workflow.workflows[doctype]) {
+					transitions = frappe.workflow.workflows[doctype].transitions || [];
+				}
+				if (transitions.length === 0) {
+					console.warn(`No workflow transitions found for ${doctype}`);
+					return [];
+				}
+
+				// Build a transition map
+				const transitionMap = {};
+				transitions.forEach(transition => {
+					if (!transitionMap[transition.state]) {
+						transitionMap[transition.state] = [];
+					}
+					transitionMap[transition.state].push(transition);
+				});
+
+				// Recursive function to collect future transitions
 				const futureTransitions = [];
 				const collectTransitions = (state) => {
-					transitions.filter(({ state: s }) => s === state).forEach(transition => {
-						futureTransitions.push(transition);
-						collectTransitions(transition.next_state);
+					if (!transitionMap[state]) return;
+					transitionMap[state].forEach(transition => {
+						if (!futureTransitions.some(t => t.action === transition.action && t.state === transition.state)) {
+							futureTransitions.push({
+								action: transition.action,
+								next_state: transition.next_state,
+								state: transition.state,
+								allowed_roles: formatAllowedRoles(transition.allowed),
+								condition: transition.condition || ""
+							});
+							collectTransitions(transition.next_state);
+						}
 					});
 				};
+
+				// Start from the current state
 				collectTransitions(workflow_state);
+
 				return futureTransitions;
 			} catch (error) {
-				console.warn("Error in workflow.getFutureTransitions:", error);
+				console.warn("Error in getFutureWorkflowTransitions:", error);
 				return [];
 			}
 		}

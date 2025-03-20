@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1] - 2025-03-20
+
+### Fixed
+- **`workflow.getFutureTransition()`: Infinite Resursion**
+  - Refactored `workflow.getFutureTransitions()` to utilize a transition map approach, eliminating redundant state evaluations and improving efficiency.
+  - Introduced a structured transition map that ensures only unique state transitions are collected, preventing excessive recursive calls.
+
 ## [1.4.0] - 2025-03-20
 
 ### Added
