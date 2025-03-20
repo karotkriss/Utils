@@ -740,6 +740,9 @@ const Utils = (function () {
 	 */
 	function addTabButtons(props) {
 		props = props || {};
+
+		const className = props.className || "";
+
 		// Normalize buttons prop: if provided as a single object, wrap it in an array.
 		if (props.buttons && !Array.isArray(props.buttons)) {
 			props.buttons = [props.buttons];
@@ -763,16 +766,15 @@ const Utils = (function () {
 			const tabFieldname = tabId.split("-").pop().replace("-tab", "");
 			const currentTabIndex = tabs.indexOf(tabFieldname);
 
-			// Build Previous button (left column)
+			// Build Previous button (left column) with className appended
 			const previousButtonHTML =
 				currentTabIndex > 0
-					? '<button class="btn btn-primary float-left tab-navigation" data-direction="previous">Previous</button>'
-					: '<button class="btn btn-primary float-left invisible" disabled>Previous</button>';
+					? `<button class="btn ${className} btn-primary float-left tab-navigation" data-direction="previous">Previous</button>`
+					: `<button class="btn ${className} btn-primary float-left invisible" disabled>Previous</button>`;
 
 			// Determine custom buttons for this tab.
 			let customButtonsHTML = "";
 			if (props.buttons && props.buttons.length) {
-				// Filter custom button configurations applicable to this tab.
 				const filtered = props.buttons.filter(function (btn) {
 					return (
 						btn.tab === tabFieldname &&
@@ -790,7 +792,7 @@ const Utils = (function () {
 							const variantClass = btn.variant && variantMapping[btn.variant]
 								? variantMapping[btn.variant]
 								: "btn-primary";
-							return `<button class="btn ${variantClass} float-right custom-tab-button" data-tab="${tabFieldname}" data-cb-index="${index}">${label}</button>`;
+							return `<button class="btn ${className} ${variantClass} float-right custom-tab-button" data-tab="${tabFieldname}" data-cb-index="${index}">${label}</button>`;
 						})
 						.join(" ");
 				}
@@ -801,8 +803,8 @@ const Utils = (function () {
 				customButtonsHTML !== ""
 					? customButtonsHTML
 					: currentTabIndex < tabs.length - 1
-						? '<button class="btn btn-primary float-right tab-navigation" data-direction="next">Next</button>'
-						: '<button class="btn btn-primary float-right invisible" disabled>Next</button>';
+						? `<button class="btn btn-primary ${className} float-right tab-navigation" data-direction="next">Next</button>`
+						: `<button class="btn btn-primary ${className} float-right invisible" disabled>Next</button>`;
 
 			const buttonHtml = `
 		  <div class="flex form-section-buttons justify-between nav-buttons w-100">
@@ -843,7 +845,6 @@ const Utils = (function () {
 		$(document).on("click", ".custom-tab-button", function () {
 			const tab = $(this).data("tab");
 			const cbIndex = parseInt($(this).data("cb-index"), 10);
-			// Recompute applicable custom buttons for this tab.
 			const applicableButtons = (props.buttons || []).filter(function (btn) {
 				return (
 					btn.tab === tab &&

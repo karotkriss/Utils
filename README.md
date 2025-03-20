@@ -10,7 +10,7 @@
 	<br>
 	<br>
 	<div style="text-align: justify; text-justify: inter-word;">
-	Utils.js is a collection of utility functions for Frappe forms. It simplifiescommon tasks such as form navigation, field management, and validation byautomatically operating on the global `cur_frm`. Whether you’re just startingout or an experienced developer, Utils.js offers a comprehensive API to help you build cleaner and more user-friendly Frappe applications.
+	Utils.js is a collection of utility functions for Frappe forms. It simplifies common tasks such as form navigation, field management, and validation byautomatically operating on the global `cur_frm`. Whether you’re just startingout or an experienced developer, Utils.js offers a comprehensive API to help you build cleaner and more user-friendly Frappe applications.
 	</div>
 </div>
 </div>
@@ -30,9 +30,7 @@
 	- [Tab Buttons & Navigation Helpers](#tab-buttons--navigation-helpers)
 	- [Actions and Action Interception](#actions-and-action-interception)
 	- [Workflow and Transition Definitions](#workflow-and-transition-definitions)
-- [API Reference](#api-reference)
 - [Contributing](#contributing)
-<!-- - [License](#license) -->
 
 ---
 
@@ -232,6 +230,13 @@ Utils.goToTab.previous.save();
 ```javascript
 // Add navigation buttons
 Util.addTabButtons()
+
+```
+#### Styling Tab Buttons with the `className` prop
+``` javascript
+// Add bootstrap or Custom classes to you buttons
+Utils.addTabButtons({ className: 'btn btn-info special-tab-button' });
+
 
 ```
 #### Saving and navigation
