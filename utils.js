@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 1.4.0
+ * @version 1.4.2
  * 
  * @module Utils
  */
@@ -1230,21 +1230,30 @@ const Utils = (function () {
 		},
 
 		/**
-		 * Retrieves all possible future workflow transitions starting from the current state.
+		 * Retrieves all possible future workflow transitions starting from the specified or current state.
+		 *
+		 * @param {Object} [props={}] - Configuration options.
+		 * @param {string} [props.state] - Optional workflow state to use as the starting state. If not provided, the current state (cur_frm.doc.workflow_state) is used.
 		 * @returns {Array.<Object>} Array of transition objects.
 		 *
 		 * @example
-		 * // Log all possible future transitions
+		 * // Log all possible future transitions from the current state:
 		 * Utils.workflow.getFutureTransitions().forEach(({ state, next_state, action }) =>
 		 *   console.log(`${state} -> ${next_state} via ${action}`)
 		 * );
 		 *
 		 * @example
-		 * // Check if "Approved" is a future workflow state
+		 * // Log future transitions starting from "Draft":
+		 * Utils.workflow.getFutureTransitions({ state: "Draft" }).forEach(({ state, next_state, action }) =>
+		 *   console.log(`${state} -> ${next_state} via ${action}`)
+		 * );
+		 *
+		 * @example
+		 * // Check if "Approved" is a future workflow state:
 		 * const isApprovalPossible = Utils.workflow.getFutureTransitions().some(({ next_state }) => next_state === "Approved");
 		 * console.log(isApprovalPossible ? "Approval is in a future state." : "Approval not possible yet.");
 		 */
-		getFutureTransitions: () => {
+		getFutureTransitions: ({ state } = {}) => {
 			try {
 				if (!cur_frm || !cur_frm.doc || !cur_frm.doc.doctype) {
 					console.warn("Utils.getFutureWorkflowTransitions(): Invalid form or missing DocType");
@@ -1252,8 +1261,9 @@ const Utils = (function () {
 				}
 
 				const doctype = cur_frm.doc.doctype;
-				const workflow_state = cur_frm.doc.workflow_state;
-				if (!workflow_state) {
+				// Use the provided state or default to the current workflow state from the form.
+				const currentState = state || cur_frm.doc.workflow_state;
+				if (!currentState) {
 					console.warn(`No workflow state found for ${doctype}`);
 					return [];
 				}
@@ -1286,9 +1296,9 @@ const Utils = (function () {
 					transitionMap[state].forEach(transition => {
 						if (!futureTransitions.some(t => t.action === transition.action && t.state === transition.state)) {
 							futureTransitions.push({
-								action: transition.action,
-								next_state: transition.next_state,
-								state: transition.state,
+								action: transition.action || "",
+								next_state: transition.next_state || "",
+								state: transition.state || "",
 								allowed_roles: formatAllowedRoles(transition.allowed),
 								condition: transition.condition || ""
 							});
@@ -1297,8 +1307,7 @@ const Utils = (function () {
 					});
 				};
 
-				// Start from the current state
-				collectTransitions(workflow_state);
+				collectTransitions(currentState);
 
 				return futureTransitions;
 			} catch (error) {

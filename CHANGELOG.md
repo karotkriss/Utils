@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.2] - 2025-03-21
+
+### Added
+  - Added support for an optional `state` parameter to `workflow.getFutureTransitions()`, allowing developers to pass a custom starting state instead of relying solely on the current document's workflow state.
+
 ## [1.4.1] - 2025-03-20
 
 ### Fixed
