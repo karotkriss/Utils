@@ -28,8 +28,8 @@
 	- [Workflow & Read-Only Handling](#workflow--read-only-handling)
 	- [Form Navigation](#form-navigation)
 	- [Tab Buttons & Navigation Helpers](#tab-buttons--navigation-helpers)
-	- [Actions and Action Interception](#actions-and-action-interception)
-	- [Workflow and Transition Definitions](#workflow-and-transition-definitions)
+	- [Action Interception](#action-interception)
+	- [Workflow and Transition Definitions](#workflow-transition-and-action-retrieval)
 - [Contributing](#contributing)
 
 ---
@@ -65,7 +65,7 @@ This module is especially useful in custom Frappe apps, helping you build dynami
 
 ### Method 1: CDN (Recommended)
 
-Reference the `jsdelivr` in your Frappe app’s `hooks.py` to load it on your pages:
+Reference the `jsdelivr` in your Frappe app’s `hooks.py` to load it onto your frappe app:
 
 ```python
 app_include_js = [
@@ -80,7 +80,7 @@ app_include_js = [
 
 1. **Navigate to Your App’s root:**
 	```bash
-	cd path/to/your_apps/root/directory
+	cd path/to/your_apps/root/directory # replace this with this with the root dir of your frappe app e.g /workspace/development/frappe-bench/apps/lending
 
 	```
 
@@ -91,6 +91,16 @@ app_include_js = [
 
 	```
 
+### Clear Cache
+
+```bash
+SITE_NAME=localhost #replace this with the name of your site
+bench --site $SITE_NAME clear-cache
+bench --site $SITE_NAME clear-website-cache
+```
+
+> You should now be able to use any Utils method by calling `Utils.[method]` client  side. <br>
+> Reference to [Usage](#usage) for all a list methods and how to use them.
 
 #### Referencing in hooks.py
 
@@ -119,7 +129,7 @@ Utils.js is intended for use in any client script of your Frappe forms. Below ar
 // Retrieves tabs from the form (excluding hidden ones if specified)
 const { tabs, json } = getTabs({ excludeHidden: true });
 console.log("Tabs:", tabs);
-console.log("Tab Definitions:", json);
+--console.log("Tab Definitions:", json);
 
 ```
 
