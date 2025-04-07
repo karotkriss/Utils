@@ -100,7 +100,7 @@ bench --site $SITE_NAME clear-cache
 bench --site $SITE_NAME clear-website-cache
 ```
 
-> You should now be able to use any Utils method by calling `Utils.[method]` client  side, <br>
+> You should now be able to use any Utils method by calling `Utils.[method]` client side, <br>
 > You may also need to clear your browser cache as well. <br>
 > Reference to [Usage](#usage) for all a list methods and how to use them.
 
@@ -138,7 +138,7 @@ console.log("Tabs:", tabs);
 #### Get Fields in a Tab
 ```javascript
 // Retrieves all fieldnames in a specified tab (e.g., "details_tab")
-const { fields, json } = Utils.getFieldsInTab({ tab: "details_tab" });
+const { fields, json } = frappe.utilsPlus.getFieldsInTab({ tab: "details_tab" });
 console.log("Fields in tab:", fields);
 console.log("Field definitions:", json);
 
@@ -147,7 +147,7 @@ console.log("Field definitions:", json);
 #### Get Fields in a Section
 ```javascript
 // Retrieves all fields in a section with a given fieldname
-const { fields, json } = Utils.getFieldsInSection({ section: "contact_section" });
+const { fields, json } = frappe.utilsPlus.getFieldsInSection({ section: "contact_section" });
 console.log("Section Fields:", fields);
 console.log("Field Definitions:", json);
 
@@ -156,7 +156,7 @@ console.log("Field Definitions:", json);
 #### Get Fields in a Column
 ```javascript
 // Retrieves all fields in a column with a given fieldname
-const { fields, json } = Utils.getFieldsInColumn({ column: "address_column" });
+const { fields, json } = frappe.utilsPlus.getFieldsInColumn({ column: "address_column" });
 console.log("Column Fields:", fields);
 console.log("Field Definitions:", json);
 
@@ -181,7 +181,7 @@ if (missing !== true) {
 
 ```javascript
 // Change the workflow state, optionally checking the current state against a specified state.
-Utils.changeWorkflowState({ newState: "Approved", currentStateCheck: "Pending" });
+frappe.utilsPlus.changeWorkflowState({ newState: "Approved", currentStateCheck: "Pending" });
 
 ```
 
@@ -189,7 +189,7 @@ Utils.changeWorkflowState({ newState: "Approved", currentStateCheck: "Pending" }
 
 ```javascript
 // Set fields "first_name" and "last_name" as readonly, but preserve those already readonly.
-Utils.makeReadOnly({
+frappe.utilsPlus.makeReadOnly({
   fields: ["first_name", "last_name"],
   preserveReadonly: true,
   debug: true
@@ -201,7 +201,7 @@ Utils.makeReadOnly({
 
 ```javascript
 // Hide fields "phone" and "email" unless the workflow state is "Draft"
-Utils.hideFields({ fields: ["phone", "email"], exceptionStates: ["Draft"] });
+frappe.utilsPlus.hideFields({ fields: ["phone", "email"], exceptionStates: ["Draft"] });
 
 ```
 
@@ -210,28 +210,28 @@ Utils.hideFields({ fields: ["phone", "email"], exceptionStates: ["Draft"] });
 #### Go To Tab
 ```javascript
 // Navigate to the tab with fieldname "details_tab"
-Utils.goToTab({ tab: "details_tab" });
+frappe.utilsPlus.goToTab({ tab: "details_tab" });
 ```
 
 #### Navigate to Next or Previous Tab
 ```javascript
 // Navigate to the next tab
-Utils.goToTab.next();
+frappe.utilsPlus.goToTab.next();
 
 // Navigate to the previous tab
-Utils.goToTab.previous();
+frappe.utilsPlus.goToTab.previous();
 ```
 
 #### Save and Navigate
 ```javascript
 // Save form and navigate to a specific tab
-Utils.goToTab.save("final_tab");
+frappe.utilsPlus.goToTab.save("final_tab");
 
 // Save form and go to the next tab
-Utils.goToTab.next.save();
+frappe.utilsPlus.goToTab.next.save();
 
 // Save form and go to the previous tab
-Utils.goToTab.previous.save();
+frappe.utilsPlus.goToTab.previous.save();
 
 ```
 
@@ -247,24 +247,24 @@ Util.addTabButtons()
 #### Styling Tab Buttons with the `className` prop
 ``` javascript
 // Add bootstrap or Custom classes to you buttons
-Utils.addTabButtons({ className: 'btn btn-info special-tab-button' });
+frappe.utilsPlus.addTabButtons({ className: 'btn btn-info special-tab-button' });
 
 
 ```
 #### Saving and navigation
 ``` javascript
 // Add navigation buttons that also save your progress in the forms on specified tabs
-Utils.addTabButtons({ saveTabs: ['personal_details', 'professional_profile'] });
+frappe.utilsPlus.addTabButtons({ saveTabs: ['personal_details', 'professional_profile'] });
 
 // Add navigation buttons that also save your progress in the forms on specified tabs
-Utils.addTabButtons({ saveTabs: ['*'] });
+frappe.utilsPlus.addTabButtons({ saveTabs: ['*'] });
 
 ```
 
 #### Replace the next button with custom buttons
 ```javascript
 // Add navigation buttons to tabs with custom configurations
-Utils.addTabButtons({
+frappe.utilsPlus.addTabButtons({
   buttons: [
     {
       tab: 'final_tab',
@@ -314,12 +314,12 @@ if (hasPrevious) {
 
 ```javascript
 // Require the user to confirm they want to perform an action
-Utils.action.confirm({
+frappe.utilsPlus.action.confirm({
   action: "Submit"
 })
 
 // Intercept "Submit" action with confirmation dialog and update a counter
-Utils.action.confirm({
+frappe.utilsPlus.action.confirm({
   action: "Submit",
   message: "Are you sure you want to submit this document?",
   debug: true,
@@ -334,12 +334,12 @@ Utils.action.confirm({
 
 #### Retrieve all workflow transition
 ```javascript
-Utils.workflow.getAllTransitions()
+frappe.utilsPlus.workflow.getAllTransitions()
 ```
 
 Log all workflow transitions
 ```javascript
-Utils.workflow.getAllTransitions().forEach(({ state, next_state, action }) =>
+frappe.utilsPlus.workflow.getAllTransitions().forEach(({ state, next_state, action }) =>
   console.log(`${state} -> ${next_state} via ${action}`)
 );
 
@@ -347,26 +347,26 @@ Utils.workflow.getAllTransitions().forEach(({ state, next_state, action }) =>
 
 Check if any transitions exist
 ```javascript
-const transitions = Utils.workflow.getAllTransitions();
+const transitions = frappe.utilsPlus.workflow.getAllTransitions();
 console.log(transitions.length ? "Transitions available." : "No transitions found.");
 
 ```
 #### Retrieve Valid Transition for the Current Workflow State
 
 ```javascript
-Utils.workflow.getTransitions()
+frappe.utilsPlus.workflow.getTransitions()
 ```
 
 Retrieve all transitions from the current state and log them
 ```javascript
-const transitions = Utils.workflow.getTransitions();
+const transitions = frappe.utilsPlus.workflow.getTransitions();
 transitions.forEach(({ action, next_state }) => console.log(`${action} -> ${next_state}`));
 
 ```
 
 Check if a `Reject` action is available
 ```javascript
-const hasRejectAction = Utils.workflow.getTransitions().some(({ action }) => action === "Reject");
+const hasRejectAction = frappe.utilsPlus.workflow.getTransitions().some(({ action }) => action === "Reject");
 console.log(hasRejectAction ? "Rejection possible." : "No rejection available.");
 
 ```
@@ -374,12 +374,12 @@ console.log(hasRejectAction ? "Rejection possible." : "No rejection available.")
 #### Retrieve all Future Transitions
 
 ```javascript
-Utils.workflow.getFutureTransitions();
+frappe.utilsPlus.workflow.getFutureTransitions();
 ```
 
 Log all possible future transitions
 ```javascript
-Utils.workflow.getFutureTransitions().forEach(({ state, next_state, action }) =>
+frappe.utilsPlus.workflow.getFutureTransitions().forEach(({ state, next_state, action }) =>
   console.log(`${state} -> ${next_state} via ${action}`)
 );
 
@@ -387,26 +387,26 @@ Utils.workflow.getFutureTransitions().forEach(({ state, next_state, action }) =>
 
 Check if "Approved" is a future workflow state
 ```javascript
-const isApprovalPossible = Utils.workflow.getFutureTransitions().some(({ next_state }) => next_state === "Approved");
+const isApprovalPossible = frappe.utilsPlus.workflow.getFutureTransitions().some(({ next_state }) => next_state === "Approved");
 console.log(isApprovalPossible ? "Approval is in a future state." : "Approval not possible yet.");
 
 ```
 
 #### Action Retrieval
 ```javascript
-Utils.workflow.getActions()
+frappe.utilsPlus.workflow.getActions()
 ```
 
 Retrieve all available workflow actions and log them to the console
 ```javascript
-const actions = Utils.workflow.getActions();
+const actions = frappe.utilsPlus.workflow.getActions();
 console.log(actions);
 
 ```
 
 Check if the "Approve" action is available
 ```javascript
-if (Utils.workflow.getActions().includes("Approve")) {
+if (frappe.utilsPlus.workflow.getActions().includes("Approve")) {
   console.log("Approval action available.");
 }
 
@@ -416,22 +416,22 @@ if (Utils.workflow.getActions().includes("Approve")) {
 
 #### Get installed apps and versions
 ```javascript
-Utils.site.apps()
+frappe.utilsPlus.site.apps()
 ```
 Log the installed apps e.g. [ { name: "ERPNext", version: "v13.0.1" }, ... ]
 ```javascript
-const apps = Utils.site.apps();
+const apps = frappe.utilsPlus.site.apps();
 console.log(apps);
 
 ```
 
 #### Get Environment
 ```javascript
-Utils.site.getEnvironment()
+frappe.utilsPlus.site.getEnvironment()
 ```
 Logs the current environment ("development" or "production")
 ```javascript
-console.log(`Current Environment: ${Utils.site.getEnvironment()}`);
+console.log(`Current Environment: ${frappe.utilsPlus.site.getEnvironment()}`);
 ```
 ---
 
