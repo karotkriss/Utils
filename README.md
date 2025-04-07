@@ -30,6 +30,7 @@
 	- [Tab Buttons & Navigation Helpers](#tab-buttons--navigation-helpers)
 	- [Action Interception](#action-interception)
 	- [Workflow and Transition Definitions](#workflow-transition-and-action-retrieval)
+	- [Site Information](#site-information)
 - [Contributing](#contributing)
 
 ---
@@ -409,6 +410,28 @@ if (Utils.workflow.getActions().includes("Approve")) {
   console.log("Approval action available.");
 }
 
+```
+
+### Site information
+
+#### Get installed apps and versions
+```javascript
+Utils.site.apps()
+```
+Log the installed apps e.g. [ { name: "ERPNext", version: "v13.0.1" }, ... ]
+```javascript
+const apps = Utils.site.apps();
+console.log(apps);
+
+```
+
+#### Get Environment
+```javascript
+Utils.site.getEnvironment()
+```
+Logs the current environment ("development" or "production")
+```javascript
+console.log(`Current Environment: ${Utils.site.getEnvironment()}`);
 ```
 ---
 
