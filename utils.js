@@ -379,7 +379,7 @@ const Utils = (function () {
 		}
 
 		if (!Array.isArray(fields)) {
-			if (debug && site.getEnvironment() !== 'development') console.warn("Utils.makeReadOnly(): 'fields' must be an array.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.makeReadOnly(): 'fields' must be an array.");
 			return [];
 		}
 
