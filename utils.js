@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 1.4.3
+ * @version 1.5.0
  * 
  * @module Utils
  */
@@ -368,18 +368,18 @@ const Utils = (function () {
 	} = {}) => {
 		const frm = cur_frm;
 		if (!frm || !frm.doc || !frm.fields_dict) {
-			if (debug) console.warn("Utils.makeReadOnly(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.makeReadOnly(): Invalid Frappe form object provided.");
 			return [];
 		}
 
 		// Skip updating if user has a bypass role.
 		if (Array.isArray(permissions) && userHasRole(permissions)) {
-			if (debug) console.debug("Utils.makeReadOnly(): User has bypass role, skipping read-only settings.");
+			if (debug && site.getEnvironment() === 'development') console.debug("Utils.makeReadOnly(): User has bypass role, skipping read-only settings.");
 			return;
 		}
 
 		if (!Array.isArray(fields)) {
-			if (debug) console.warn("Utils.makeReadOnly(): 'fields' must be an array.");
+			if (debug && site.getEnvironment() !== 'development') console.warn("Utils.makeReadOnly(): 'fields' must be an array.");
 			return [];
 		}
 
@@ -393,13 +393,13 @@ const Utils = (function () {
 					frm.fields_dict[field].df &&
 					frm.fields_dict[field].df.read_only
 				) {
-					if (debug) console.debug(`Utils.makeReadOnly(): Preserving field "${field}" as readonly.`);
+					if (debug && site.getEnvironment() !== 'development') console.debug(`Utils.makeReadOnly(): Preserving field "${field}" as readonly.`);
 					return;
 				}
 				console.log(`Setting ${field} to read_only: ${isExceptionState ? 0 : 1}`);
 				frm.set_df_property(field, "read_only", isExceptionState ? 0 : 1);
 				frm.refresh_field(field);
-			} else if (debug) {
+			} else if (debug && site.getEnvironment() !== 'development') {
 				console.warn(`Utils.makeReadOnly(): Field "${field}" does not exist in the form or cannot be set to read_only.`);
 			}
 		});
@@ -939,7 +939,7 @@ const Utils = (function () {
 			const { action, message, debug, updateField } = props;
 
 			if (!action) {
-				if (debug) {
+				if (debug && site.getEnvironment() === 'development') {
 					console.warn("Utils.action.confirm(): No action provided.");
 				}
 				return;
@@ -948,7 +948,7 @@ const Utils = (function () {
 			frappe.ui.form.on(cur_frm.doc.doctype, {
 				before_workflow_action: async () => {
 					if (cur_frm.selected_workflow_action !== action) return;
-					if (debug) console.log(`Intercepting Workflow Action: ${action}`);
+					if (debug && site.getEnvironment() === 'development') console.log(`Intercepting Workflow Action: ${action}`);
 					frappe.dom.unfreeze();
 
 					let promise = new Promise((resolve, reject) => {
@@ -958,13 +958,13 @@ const Utils = (function () {
 								if (updateField && updateField.field && updateField.value !== undefined) {
 									frappe.db.set_value(cur_frm.doctype, cur_frm.docname, updateField.field, updateField.value)
 										.then(response => {
-											if (debug) {
+											if (debug && site.getEnvironment() === 'development') {
 												console.debug(`Field ${updateField.field} updated successfully`, response);
 											}
 											resolve();
 										})
 										.catch(error => {
-											if (debug) {
+											if (debug && site.getEnvironment() === 'development') {
 												console.error(`Error updating field ${updateField.field}`, error);
 											}
 											reject();
@@ -974,7 +974,7 @@ const Utils = (function () {
 								}
 							},
 							() => {
-								if (debug) {
+								if (debug && site.getEnvironment() === 'development') {
 									console.debug(`Utils.action.confirm(): Cancelled action "${action}"`);
 								}
 								reject();
@@ -1332,7 +1332,7 @@ const Utils = (function () {
 		 * @returns {Array<Object>} Array of objects with app information (e.g., { name: "AppName", version: "1.2.3" }).
 		 *
 		 * @example
-		 * const apps = Utils.instance.apps();
+		 * const apps = Utils.site.apps();
 		 * console.log(apps); // e.g. [ { name: "ERPNext", version: "v13.0.1" }, ... ]
 		 */
 		apps: () => {
@@ -1340,6 +1340,34 @@ const Utils = (function () {
 				return frappe.boot.versions;
 			}
 			return [];
+		},
+		/**
+		 * Determines the current running environment.
+		 *
+		 * This function checks if Frappe's boot information is available to determine
+		 * if the application is running in development mode (using the developer_mode flag).
+		 * If that is not available, it falls back to checking the window's hostname for common
+		 * development hosts such as "localhost" or "127.0.0.1". If neither method provides a 
+		 * definitive answer, it defaults to "production".
+		 *
+		 * @returns {string} Returns "development" if in a development environment, otherwise "production".
+		 *
+		 * @example
+		 * // Logs the current environment ("development" or "production")
+		 * console.log(`Current Environment: ${Utils.site.getEnvironment()}`);
+		 */
+		getEnvironment: () => {
+			// If Frappe boot is available, use its developer_mode flag.
+			if (typeof frappe !== 'undefined' && frappe.boot && typeof frappe.boot.developer_mode !== 'undefined') {
+				return frappe.boot.developer_mode ? 'development' : 'production';
+			}
+
+			if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+				const devHosts = ['localhost', '127.0.0.1'];
+				return devHosts.includes(window.location.hostname) ? 'development' : 'production';
+			}
+
+			return 'production';
 		}
 	}
 

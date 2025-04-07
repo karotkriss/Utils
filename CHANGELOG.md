@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0] - 2025-04-07
+
+### Added
+  - **`site.getEnvironment()`:**
+    - This method is meant to retrieve whether if you are in production or a dev environment (returns "development" or "production").
+
+### Fixed
+  - **`dubug` property:**
+    - disabled all console logs and warning in production
+
 ## [1.4.3] - 2025-04-07
 
 ### Fixed
