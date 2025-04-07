@@ -100,7 +100,7 @@ bench --site $SITE_NAME clear-cache
 bench --site $SITE_NAME clear-website-cache
 ```
 
-> You should now be able to use any Utils method by calling `Utils.[method]` client side, <br>
+> You should now be able to use any Utils method by calling `frappe.utilsPlus[method]` client side, <br>
 > You may also need to clear your browser cache as well. <br>
 > Reference to [Usage](#usage) for all a list methods and how to use them.
 
