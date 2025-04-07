@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.0] - 2025-04-07
+
+### Added
+  - **`frappe.utilsPlus`:**
+    - add Utils to the window object under frappe with namespace `frappe.utilsPlus` to comply with frappe best practice.
+
 ## [1.5.0] - 2025-04-07
 
 ### Added

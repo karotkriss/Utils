@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 1.5.0
+ * @version 1.6.0
  * 
  * @module Utils
  */
@@ -1393,4 +1393,11 @@ const Utils = (function () {
 		workflow: workflow,
 		site: site
 	};
+})();
+
+
+// compliance with frappe best practice
+(() => {
+	frappe.provide('frappe.utilsPlus');
+	frappe.utilsPlus = Utils
 })();
