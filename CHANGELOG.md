@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.3] - 2025-04-07
+
+### Fixed
+  - fixed duplicated tab navigation element on refresh
+
 ## [1.4.2] - 2025-03-21
 
 ### Added

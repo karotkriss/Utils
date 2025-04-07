@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 1.4.2
+ * @version 1.4.3
  * 
  * @module Utils
  */
@@ -764,6 +764,10 @@ const Utils = (function () {
 		const tabsData = Utils.getTabs(true);
 		const tabs = tabsData.tabs;
 
+		const $tab_nav = $("div.nav-buttons");
+		if ($tab_nav.length > 0) {
+			$tab_nav.remove();
+		}
 		// Append navigation buttons to each .tab-pane.
 		$(".tab-pane").each(function () {
 			const tabId = $(this).attr("id");
