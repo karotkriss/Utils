@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 1.5.0
+ * @version 1.6.0
  * 
  * @module Utils
  */
