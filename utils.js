@@ -1351,6 +1351,7 @@ const Utils = (function () {
 		 * definitive answer, it defaults to "production".
 		 *
 		 * @returns {string} Returns "development" if in a development environment, otherwise "production".
+		 * @since 1.5.0
 		 *
 		 * @example
 		 * // Logs the current environment ("development" or "production")
