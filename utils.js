@@ -1394,3 +1394,10 @@ const Utils = (function () {
 		site: site
 	};
 })();
+
+
+// compliance with frappe best practice
+(() => {
+	frappe.provide('frappe.utilsPlus');
+	frappe.utilsPlus = Utils
+})();
