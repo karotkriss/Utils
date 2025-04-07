@@ -393,13 +393,13 @@ const Utils = (function () {
 					frm.fields_dict[field].df &&
 					frm.fields_dict[field].df.read_only
 				) {
-					if (debug && site.getEnvironment() !== 'development') console.debug(`Utils.makeReadOnly(): Preserving field "${field}" as readonly.`);
+					if (debug && site.getEnvironment() === 'development') console.debug(`Utils.makeReadOnly(): Preserving field "${field}" as readonly.`);
 					return;
 				}
 				console.log(`Setting ${field} to read_only: ${isExceptionState ? 0 : 1}`);
 				frm.set_df_property(field, "read_only", isExceptionState ? 0 : 1);
 				frm.refresh_field(field);
-			} else if (debug && site.getEnvironment() !== 'development') {
+			} else if (debug && site.getEnvironment() === 'development') {
 				console.warn(`Utils.makeReadOnly(): Field "${field}" does not exist in the form or cannot be set to read_only.`);
 			}
 		});
