@@ -764,6 +764,10 @@ const Utils = (function () {
 		const tabsData = Utils.getTabs(true);
 		const tabs = tabsData.tabs;
 
+		const $tab_nav = $("div.nav-buttons");
+		if ($tab_nav.length > 0) {
+			$tab_nav.remove();
+		}
 		// Append navigation buttons to each .tab-pane.
 		$(".tab-pane").each(function () {
 			const tabId = $(this).attr("id");
