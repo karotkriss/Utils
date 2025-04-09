@@ -423,19 +423,25 @@ const Utils = (function () {
 		const frm = cur_frm;
 		if (!frm?.doc || !frm.fields_dict) {
 			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hideFields(): Invalid Frappe form object provided.");
-			return [];
+			return;
 		}
 
 		if (!Array.isArray(fields)) {
 			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hideFields(): 'fields' must be an array.");
-			return [];
+			return;
+		}
+
+		if (conditional !== undefined && typeof conditional !== 'function') {
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hideFields(): 'conditional' must be a function.");
+			return;
 		}
 
 		const isExceptionState = exceptionStates.includes(frm.doc.workflow_state);
+
 		fields.forEach(field => {
 			if (frm.fields_dict[field]) {
-				if (debug && site.getEnvironment() === 'development') console.debug(`Setting ${field} to hidden: ${isExceptionState || conditional ? 0 : 1}`);
-				frm.set_df_property(field, "hidden", isExceptionState || conditional ? 0 : 1);
+				if (debug && site.getEnvironment() === 'development') console.debug(`Setting ${field} to hidden: ${isExceptionState || conditional() ? 0 : 1}`);
+				frm.set_df_property(field, "hidden", isExceptionState || conditional() ? 0 : 1);
 				frm.refresh_field(field);
 			} else {
 				if (debug && site.getEnvironment() === 'development') console.warn(`Utils.hideFields(): Field "${field}" does not exist in the form or cannot be hidden.`);
