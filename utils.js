@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 1.6.0
+ * @version 1.7.0
  * 
  * @module Utils
  */
@@ -411,24 +411,40 @@ const Utils = (function () {
 	 * @param {Object} props - The configuration object.
 	 * @param {string[]} props.fields - Array of field names to hide.
 	 * @param {string[]} [props.exceptionStates=[]] - Array of workflow states during which the fields remain visible.
+	 * @param {function} props.conditional - If this is truthy the fields will be hidden.
 	 *
 	 * @example
 	 * // Hide fields "phone" and "email" unless the workflow state is "Draft"
 	 * Utils.hideFields({ fields: ["phone", "email"], exceptionStates: ["Draft"] });
 	 */
-	const hideFields = ({ fields = [], exceptionStates = [] } = {}) => {
+	const hideFields = (props) => {
+		const { fields = [], exceptionStates = [], debug, conditional } = props
+
 		const frm = cur_frm;
 		if (!frm?.doc || !frm.fields_dict) {
-			console.warn("Utils.hideFields(): Invalid Frappe form object provided.");
-			return [];
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hideFields(): Invalid Frappe form object provided.");
+			return;
 		}
+
+		if (!Array.isArray(fields)) {
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hideFields(): 'fields' must be an array.");
+			return;
+		}
+
+		if (conditional !== undefined && typeof conditional !== 'function') {
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hideFields(): 'conditional' must be a function.");
+			return;
+		}
+
 		const isExceptionState = exceptionStates.includes(frm.doc.workflow_state);
+
 		fields.forEach(field => {
 			if (frm.fields_dict[field]) {
-				frm.set_df_property(field, "hidden", isExceptionState ? 0 : 1);
+				if (debug && site.getEnvironment() === 'development') console.debug(`Setting ${field} to hidden: ${isExceptionState || conditional() ? 0 : 1}`);
+				frm.set_df_property(field, "hidden", isExceptionState || conditional() ? 0 : 1);
 				frm.refresh_field(field);
 			} else {
-				console.warn(`Utils.hideFields(): Field "${field}" does not exist in the form or cannot be hidden.`);
+				if (debug && site.getEnvironment() === 'development') console.warn(`Utils.hideFields(): Field "${field}" does not exist in the form or cannot be hidden.`);
 			}
 		});
 	}

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.7.0] - 2025-04-09
+
+### Added
+  - **New Props for `frappe.utilsPlus.hideFields`:**
+    - Added `conditional` and `debug` props
+
 ## [1.6.0] - 2025-04-07
 
 ### Added
