@@ -84,7 +84,7 @@ const Utils = (function () {
 	const getTabs = ({ excludeHidden = false } = {}) => {
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			console.warn("Utils.getTabs(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getTabs(): Invalid Frappe form object provided.");
 			return { tabs: [], json: {} };
 		}
 
@@ -103,11 +103,11 @@ const Utils = (function () {
 							expr = expr.replace(/\bdoc\./g, "frm.doc.");
 						}
 						if (!eval(expr)) {
-							console.warn(`Utils.getTabs(): Tab "${field.label}" dependency check failed. Expression: ${field.depends_on}`);
+							if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getTabs(): Tab "${field.label}" dependency check failed. Expression: ${field.depends_on}`);
 							return;
 						}
 					} catch (error) {
-						console.warn(`Utils.getTabs(): Error evaluating dependency for tab "${field.label}": ${error.message}`);
+						if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getTabs(): Error evaluating dependency for tab "${field.label}": ${error.message}`);
 						return;
 					}
 				}
@@ -117,7 +117,7 @@ const Utils = (function () {
 		});
 
 		if (tabs.length === 0) {
-			console.warn("Utils.getTabs(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getTabs(): No tabs found in the form.");
 		}
 		return { tabs, json: tabsJSON };
 	}
@@ -140,7 +140,7 @@ const Utils = (function () {
 	const getFieldsInTab = ({ tab } = {}) => {
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			console.warn("Utils.getFieldsInTab(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getFieldsInTab(): Invalid Frappe form object provided.");
 			return {};
 		}
 
@@ -165,9 +165,9 @@ const Utils = (function () {
 		});
 
 		if (!tabFound) {
-			console.warn(`Utils.getFieldsInTab(): Tab with fieldname "${tab}" not found.`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInTab(): Tab with fieldname "${tab}" not found.`);
 		} else if (fieldsInTab.length === 0) {
-			console.warn(`Utils.getFieldsInTab(): No fields found in tab "${tab}".`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInTab(): No fields found in tab "${tab}".`);
 		}
 
 		return { fields: fieldsInTab, json: fieldsInTabJSON };
@@ -192,7 +192,7 @@ const Utils = (function () {
 	const getFieldsInSection = ({ sectionFieldName } = {}) => {
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			console.warn("Utils.getFieldsInSection(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getFieldsInSection(): Invalid Frappe form object provided.");
 			return {};
 		}
 
@@ -217,9 +217,9 @@ const Utils = (function () {
 		});
 
 		if (!sectionFound) {
-			console.warn(`Utils.getFieldsInSection(): Section with fieldname "${sectionFieldName}" not found.`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInSection(): Section with fieldname "${sectionFieldName}" not found.`);
 		} else if (fieldsInSection.length === 0) {
-			console.warn(`Utils.getFieldsInSection(): No fields found in section "${sectionFieldName}".`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInSection(): No fields found in section "${sectionFieldName}".`);
 		}
 		return { fields: fieldsInSection, json: fieldsInSectionJSON };
 	}
@@ -242,7 +242,7 @@ const Utils = (function () {
 	const getFieldsInColumn = ({ columnFieldName } = {}) => {
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			console.warn("Utils.getFieldsInColumn(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getFieldsInColumn(): Invalid Frappe form object provided.");
 			return {};
 		}
 
@@ -267,9 +267,9 @@ const Utils = (function () {
 		});
 
 		if (!columnFound) {
-			console.warn(`Utils.getFieldsInColumn(): Column with fieldname "${columnFieldName}" not found.`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInColumn(): Column with fieldname "${columnFieldName}" not found.`);
 		} else if (fieldsInColumn.length === 0) {
-			console.warn(`Utils.getFieldsInColumn(): No fields found in column "${columnFieldName}".`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInColumn(): No fields found in column "${columnFieldName}".`);
 		}
 		return { fields: fieldsInColumn, json: fieldsInColumnJSON };
 	}
@@ -291,7 +291,7 @@ const Utils = (function () {
 	const checkMandatory = ({ fields = [] } = {}) => {
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			console.warn("Utils.checkMandatory(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.checkMandatory(): Invalid Frappe form object provided.");
 			return [];
 		}
 		const missingFields = [];
@@ -303,7 +303,7 @@ const Utils = (function () {
 					missingFields.push(field);
 				}
 			} else {
-				console.warn(`Utils.checkMandatory(): Field "${field}" does not exist in the form or cannot be marked mandatory.`);
+				if (debug && site.getEnvironment() === 'development') console.warn(`Utils.checkMandatory(): Field "${field}" does not exist in the form or cannot be marked mandatory.`);
 			}
 		});
 
@@ -328,11 +328,11 @@ const Utils = (function () {
 	const changeWorkflowState = ({ newState, currentStateCheck } = {}) => {
 		const frm = cur_frm;
 		if (!frm) {
-			console.warn("Utils.changeWorkflowState(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.changeWorkflowState(): Invalid Frappe form object provided.");
 			return;
 		}
 		if (currentStateCheck && frm.doc.workflow_state !== currentStateCheck) {
-			console.warn(`Utils.changeWorkflowState(): Current state is not ${currentStateCheck}. State change aborted.`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.changeWorkflowState(): Current state is not ${currentStateCheck}. State change aborted.`);
 			return;
 		}
 		frm.set_value("workflow_state", newState);
@@ -465,13 +465,13 @@ const Utils = (function () {
 	const goToTab = ({ tab } = {}) => {
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			console.warn("Utils.goToTab(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab(): Invalid Frappe form object provided.");
 			return;
 		}
 		// Use the refactored getFieldsInTab that accepts { tab }.
 		const { fields, json } = getFieldsInTab({ tab });
 		if (!fields || fields.length === 0) {
-			console.warn(`Utils.goToTab(): Tab with fieldname "${tab}" not found or contains no valid fields.`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.goToTab(): Tab with fieldname "${tab}" not found or contains no valid fields.`);
 			return;
 		}
 		const firstValidField = fields.find(fieldname => {
@@ -479,7 +479,7 @@ const Utils = (function () {
 			return fieldMeta && fieldMeta.fieldtype !== "Column Break" && fieldMeta.fieldtype !== "Section Break";
 		});
 		if (!firstValidField) {
-			console.warn(`Utils.goToTab(): No scrollable fields found in tab "${tab}".`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.goToTab(): No scrollable fields found in tab "${tab}".`);
 			return;
 		}
 		frm.scroll_to_field(firstValidField);
@@ -497,18 +497,18 @@ const Utils = (function () {
 	goToTab.next = () => {
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
-			console.warn("Utils.goToTab.next(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.next(): No tabs found in the form.");
 			return;
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
-			console.warn("Utils.goToTab.next(): No active tab found.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.next(): No active tab found.");
 			return;
 		}
 		const currentTab = activeTabLink.data("fieldname");
 		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
-			console.warn("Utils.goToTab.next(): Current tab not found in the list of tabs.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.next(): Current tab not found in the list of tabs.");
 			return;
 		}
 		const nextTabIndex = currentTabIndex + 1;
@@ -516,7 +516,7 @@ const Utils = (function () {
 			const nextTab = tabs[nextTabIndex];
 			goToTab({ tab: nextTab });
 		} else {
-			console.warn("Utils.goToTab.next(): No next tab found. You are already on the last tab.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.next(): No next tab found. You are already on the last tab.");
 		}
 	};
 
@@ -532,18 +532,18 @@ const Utils = (function () {
 	goToTab.previous = () => {
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
-			console.warn("Utils.goToTab.previous(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.previous(): No tabs found in the form.");
 			return;
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
-			console.warn("Utils.goToTab.previous(): No active tab found.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.previous(): No active tab found.");
 			return;
 		}
 		const currentTab = activeTabLink.data("fieldname");
 		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
-			console.warn("Utils.goToTab.previous(): Current tab not found in the list of tabs.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.previous(): Current tab not found in the list of tabs.");
 			return;
 		}
 		const previousTabIndex = currentTabIndex - 1;
@@ -551,7 +551,7 @@ const Utils = (function () {
 			const previousTab = tabs[previousTabIndex];
 			goToTab({ tab: previousTab });
 		} else {
-			console.warn("Utils.goToTab.previous(): No previous tab found. You are already on the first tab.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.previous(): No previous tab found. You are already on the first tab.");
 		}
 	};
 
@@ -627,18 +627,18 @@ const Utils = (function () {
 	const hasNextTab = () => {
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
-			console.warn("Utils.hasNextTab(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasNextTab(): No tabs found in the form.");
 			return { hasNext: false, nextTab: null };
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
-			console.warn("Utils.hasNextTab(): No active tab found.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasNextTab(): No active tab found.");
 			return { hasNext: false, nextTab: null };
 		}
 		const currentTab = activeTabLink.data("fieldname");
 		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
-			console.warn("Utils.hasNextTab(): Current tab not found in the list of tabs.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasNextTab(): Current tab not found in the list of tabs.");
 			return { hasNext: false, nextTab: null };
 		}
 		const nextTabIndex = currentTabIndex + 1;
@@ -665,18 +665,18 @@ const Utils = (function () {
 	const hasPreviousTab = () => {
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
-			console.warn("Utils.hasPreviousTab(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasPreviousTab(): No tabs found in the form.");
 			return { hasPrevious: false, previousTab: null };
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
-			console.warn("Utils.hasPreviousTab(): No active tab found.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasPreviousTab(): No active tab found.");
 			return { hasPrevious: false, previousTab: null };
 		}
 		const currentTab = activeTabLink.data("fieldname");
 		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
-			console.warn("Utils.hasPreviousTab(): Current tab not found in the list of tabs.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasPreviousTab(): Current tab not found in the list of tabs.");
 			return { hasPrevious: false, previousTab: null };
 		}
 		const previousTabIndex = currentTabIndex - 1;
@@ -883,7 +883,7 @@ const Utils = (function () {
 			if (btnConfig && typeof btnConfig.callback === "function") {
 				btnConfig.callback(frm, tab);
 			} else {
-				console.log("Custom button clicked on tab " + tab);
+				if (debug && site.getEnvironment() === 'development') console.log("Custom button clicked on tab " + tab);
 			}
 		});
 	}
@@ -906,14 +906,14 @@ const Utils = (function () {
 	 * console.log(actions); // e.g. ["Approve", "Reject"]
 	 */
 	const getActions = () => {
-		console.warn('This [getActions] method is deprecated and will be removed in version 2.0.0 Please use the [workflow.getActions] method instead. ')
+		if (debug && site.getEnvironment() === 'development') console.warn('This [getActions] method is deprecated and will be removed in version 2.0.0 Please use the [workflow.getActions] method instead. ')
 		try {
 			// Get transitions for the current state using the helper.
 			const transitions = getWorkflowTransitions();
 			// Map the transitions to their action names.
 			return transitions.map(transition => transition.action);
 		} catch (error) {
-			console.warn("Error in getActions:", error);
+			if (debug && site.getEnvironment() === 'development') console.warn("Error in getActions:", error);
 			return [];
 		}
 	};
@@ -956,7 +956,7 @@ const Utils = (function () {
 
 			if (!action) {
 				if (debug && site.getEnvironment() === 'development') {
-					console.warn("Utils.action.confirm(): No action provided.");
+					if (debug && site.getEnvironment() === 'development') console.warn("Utils.action.confirm(): No action provided.");
 				}
 				return;
 			}
