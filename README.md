@@ -131,7 +131,7 @@ Utils.js is intended for use in any client script of your Frappe forms. Below ar
 // Retrieves tabs from the form (excluding hidden ones if specified)
 const { tabs, json } = getTabs({ excludeHidden: true });
 console.log("Tabs:", tabs);
---console.log("Tab Definitions:", json);
+console.log("Tab Definitions:", json);
 
 ```
 
@@ -200,8 +200,16 @@ frappe.utilsPlus.makeReadOnly({
 #### Hide Fields
 
 ```javascript
-// Hide fields "phone" and "email" unless the workflow state is "Draft"
-frappe.utilsPlus.hideFields({ fields: ["phone", "email"], exceptionStates: ["Draft"] });
+// Hide fields "phone" and "email" unless the workflow state is "Draft" and unhide for a specific user with a conditional function
+frappe.utilsPlus.hideFields({
+  fields: ["phone", "email"],
+  exceptionStates: ["Draft"],
+  conditional: () => {
+    let user = frappe.session.user
+    return user !== 'someuse@test.com'
+  },
+  debug: true
+});
 
 ```
 
