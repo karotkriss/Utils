@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.1] - 2025-04-09
+
+### Added
+  - **Duplicate Prevention Mechanism for `frappe.utilsPlus.action.confirm()`:**
+    - Added a check using a unique flag (based on the action name) to prevent multiple confirmation dialogs from being triggered for the same workflow action.
+
 ## [2.0.0] - 2025-04-09
 
 ### Added
