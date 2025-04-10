@@ -414,7 +414,7 @@ const Utils = (function () {
 					if (debug && site.getEnvironment() === 'development') console.debug(`Utils.makeReadOnly(): Preserving field "${field}" as readonly.`);
 					return;
 				}
-				console.log(`Setting ${field} to read_only: ${isExceptionState ? 0 : 1}`);
+				if (debug && site.getEnvironment() === 'development') console.log(`Setting ${field} to read_only: ${isExceptionState ? 0 : 1}`);
 				frm.set_df_property(field, "read_only", isExceptionState ? 0 : 1);
 				frm.refresh_field(field);
 			} else if (debug && site.getEnvironment() === 'development') {
