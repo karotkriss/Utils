@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.0.0] - 2025-04-09
+
+### Added
+  - **Missing `debug` props:**
+    - Added missing `debug` props
+
+### Changed
+  - **Core `props`:**
+    - `sectionFieldName` -> `section`
+    - `ColumnFieldName` -> `column`
+
+### Fixed
+  - Disabled all logging in production environments.
+
+### Removed
+  - `getAllWorkflowTransitions`
+	- `getWorkflowTransitions`
+	- `getActions`
+
 ## [1.7.0] - 2025-04-09
 
 ### Added

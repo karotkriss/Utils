@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 1.7.0
+ * @version 2.0.0
  * 
  * @module Utils
  */
@@ -71,6 +71,7 @@ const Utils = (function () {
 	 *
 	 * @param {Object} [props={}] - The configuration object.
 	 * @param {boolean} [props.excludeHidden=false] - Flag indicating whether to exclude hidden tabs.
+	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
 	 * @returns {{tabs: string[], json: Object}} An object containing:
 	 *   - tabs: An array of tab fieldnames.
 	 *   - json: An object mapping tab fieldnames to their field definitions.
@@ -81,10 +82,11 @@ const Utils = (function () {
 	 * console.log("Tabs:", tabs);
 	 * console.log("Tab Definitions:", json);
 	 */
-	const getTabs = ({ excludeHidden = false } = {}) => {
+	const getTabs = (props = {}) => {
+		const { excludeHidden = false, debug = false } = props
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			console.warn("Utils.getTabs(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getTabs(): Invalid Frappe form object provided.");
 			return { tabs: [], json: {} };
 		}
 
@@ -103,11 +105,11 @@ const Utils = (function () {
 							expr = expr.replace(/\bdoc\./g, "frm.doc.");
 						}
 						if (!eval(expr)) {
-							console.warn(`Utils.getTabs(): Tab "${field.label}" dependency check failed. Expression: ${field.depends_on}`);
+							if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getTabs(): Tab "${field.label}" dependency check failed. Expression: ${field.depends_on}`);
 							return;
 						}
 					} catch (error) {
-						console.warn(`Utils.getTabs(): Error evaluating dependency for tab "${field.label}": ${error.message}`);
+						if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getTabs(): Error evaluating dependency for tab "${field.label}": ${error.message}`);
 						return;
 					}
 				}
@@ -117,7 +119,7 @@ const Utils = (function () {
 		});
 
 		if (tabs.length === 0) {
-			console.warn("Utils.getTabs(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getTabs(): No tabs found in the form.");
 		}
 		return { tabs, json: tabsJSON };
 	}
@@ -125,8 +127,9 @@ const Utils = (function () {
 	/**
 	 * Retrieves all fields within a specified tab from the current form.
 	 *
-	 * @param {Object} props - The configuration object.
-	 * @param {string} props.tab - The fieldname of the target tab.
+	 * @param {Object} [props] - The configuration object.
+	 * @param {string} [props.tab] - The fieldname of the target tab.
+	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
 	 * @returns {{fields: string[], json: Object}} An object containing:
 	 *   - fields: An array of fieldnames present within the tab.
 	 *   - json: An object mapping each fieldname to its field definition.
@@ -137,10 +140,12 @@ const Utils = (function () {
 	 * console.log("Fields in tab:", fields);
 	 * console.log("Field definitions:", json);
 	 */
-	const getFieldsInTab = ({ tab } = {}) => {
+	const getFieldsInTab = (props = {}) => {
+		const { tab, debug } = props
+
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			console.warn("Utils.getFieldsInTab(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getFieldsInTab(): Invalid Frappe form object provided.");
 			return {};
 		}
 
@@ -165,9 +170,9 @@ const Utils = (function () {
 		});
 
 		if (!tabFound) {
-			console.warn(`Utils.getFieldsInTab(): Tab with fieldname "${tab}" not found.`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInTab(): Tab with fieldname "${tab}" not found.`);
 		} else if (fieldsInTab.length === 0) {
-			console.warn(`Utils.getFieldsInTab(): No fields found in tab "${tab}".`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInTab(): No fields found in tab "${tab}".`);
 		}
 
 		return { fields: fieldsInTab, json: fieldsInTabJSON };
@@ -177,22 +182,25 @@ const Utils = (function () {
 	/**
 	 * Retrieves all fields within a specified section from the current form.
 	 *
-	 * @param {Object} props - The configuration object.
-	 * @param {string} props.sectionFieldName - The fieldname of the target section.
+	 * @param {Object} [props] - The configuration object.
+	 * @param {string} [props.section] - The fieldname of the target section.
+	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
 	 * @returns {{fields: string[], json: Object}} An object containing:
 	 *   - fields: An array of fieldnames present within the section.
 	 *   - json: An object mapping each fieldname to its field definition.
 	 *
 	 * @example
 	 * // Retrieve fields in a section named "my_section"
-	 * const { fields, json } = Utils.getFieldsInSection({ sectionFieldName: "my_section" });
+	 * const { fields, json } = Utils.getFieldsInSection({ section: "my_section" });
 	 * console.log("Section Fields:", fields);
 	 * console.log("Field Definitions:", json);
 	 */
-	const getFieldsInSection = ({ sectionFieldName } = {}) => {
+	const getFieldsInSection = (props = {}) => {
+		const { section, debug } = props
+
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			console.warn("Utils.getFieldsInSection(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getFieldsInSection(): Invalid Frappe form object provided.");
 			return {};
 		}
 
@@ -203,7 +211,7 @@ const Utils = (function () {
 
 		frm.meta.fields.forEach(field => {
 			if (field.fieldtype === "Section Break") {
-				if (field.fieldname === sectionFieldName) {
+				if (field.fieldname === section) {
 					sectionFound = true;
 					collectFields = true;
 				} else if (collectFields) {
@@ -217,9 +225,9 @@ const Utils = (function () {
 		});
 
 		if (!sectionFound) {
-			console.warn(`Utils.getFieldsInSection(): Section with fieldname "${sectionFieldName}" not found.`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInSection(): Section with fieldname "${section}" not found.`);
 		} else if (fieldsInSection.length === 0) {
-			console.warn(`Utils.getFieldsInSection(): No fields found in section "${sectionFieldName}".`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInSection(): No fields found in section "${section}".`);
 		}
 		return { fields: fieldsInSection, json: fieldsInSectionJSON };
 	}
@@ -228,21 +236,24 @@ const Utils = (function () {
 	 * Retrieves all fields within a specified column from the current form.
 	 *
 	 * @param {Object} props - The configuration object.
-	 * @param {string} props.columnFieldName - The fieldname of the target column.
+	 * @param {string} props.column - The fieldname of the target column.
+	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
 	 * @returns {{fields: string[], json: Object}} An object containing:
 	 *   - fields: An array of fieldnames present within the column.
 	 *   - json: An object mapping each fieldname to its field definition.
 	 *
 	 * @example
 	 * // Retrieve fields in a column named "my_column"
-	 * const { fields, json } = Utils.getFieldsInColumn({ columnFieldName: "my_column" });
+	 * const { fields, json } = Utils.getFieldsInColumn({ column: "my_column" });
 	 * console.log("Column Fields:", fields);
 	 * console.log("Field Definitions:", json);
 	 */
-	const getFieldsInColumn = ({ columnFieldName } = {}) => {
+	const getFieldsInColumn = (props = {}) => {
+		const { column, debug } = props
+
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			console.warn("Utils.getFieldsInColumn(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getFieldsInColumn(): Invalid Frappe form object provided.");
 			return {};
 		}
 
@@ -253,7 +264,7 @@ const Utils = (function () {
 
 		frm.meta.fields.forEach(field => {
 			if (field.fieldtype === "Column Break") {
-				if (field.fieldname === columnFieldName) {
+				if (field.fieldname === column) {
 					columnFound = true;
 					collectFields = true;
 				} else if (collectFields) {
@@ -267,9 +278,9 @@ const Utils = (function () {
 		});
 
 		if (!columnFound) {
-			console.warn(`Utils.getFieldsInColumn(): Column with fieldname "${columnFieldName}" not found.`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInColumn(): Column with fieldname "${column}" not found.`);
 		} else if (fieldsInColumn.length === 0) {
-			console.warn(`Utils.getFieldsInColumn(): No fields found in column "${columnFieldName}".`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInColumn(): No fields found in column "${column}".`);
 		}
 		return { fields: fieldsInColumn, json: fieldsInColumnJSON };
 	}
@@ -279,6 +290,7 @@ const Utils = (function () {
 	 *
 	 * @param {Object} props - The configuration object.
 	 * @param {string[]} props.fields - Array of field names to check.
+	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
 	 * @returns {string[]|boolean} Returns an array of missing field names if any are empty; otherwise, returns true.
 	 *
 	 * @example
@@ -288,10 +300,12 @@ const Utils = (function () {
 	 *   console.log("Missing mandatory fields:", result);
 	 * }
 	 */
-	const checkMandatory = ({ fields = [] } = {}) => {
+	const checkMandatory = (props = {}) => {
+		const { fields = [], debug } = props
+
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			console.warn("Utils.checkMandatory(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.checkMandatory(): Invalid Frappe form object provided.");
 			return [];
 		}
 		const missingFields = [];
@@ -303,7 +317,7 @@ const Utils = (function () {
 					missingFields.push(field);
 				}
 			} else {
-				console.warn(`Utils.checkMandatory(): Field "${field}" does not exist in the form or cannot be marked mandatory.`);
+				if (debug && site.getEnvironment() === 'development') console.warn(`Utils.checkMandatory(): Field "${field}" does not exist in the form or cannot be marked mandatory.`);
 			}
 		});
 
@@ -320,19 +334,21 @@ const Utils = (function () {
 	 * @param {Object} props - The configuration object.
 	 * @param {string} props.newState - The new workflow state to set.
 	 * @param {string} [props.currentStateCheck] - Optional. Only change if the current workflow state matches this value.
+	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
 	 *
 	 * @example
 	 * // Change the workflow state to "Approved" only if the current state is "Pending"
 	 * Utils.changeWorkflowState({ newState: "Approved", currentStateCheck: "Pending" });
 	 */
-	const changeWorkflowState = ({ newState, currentStateCheck } = {}) => {
+	const changeWorkflowState = (props = {}) => {
+		const { newState, currentStateCheck, debug } = props
 		const frm = cur_frm;
 		if (!frm) {
-			console.warn("Utils.changeWorkflowState(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.changeWorkflowState(): Invalid Frappe form object provided.");
 			return;
 		}
 		if (currentStateCheck && frm.doc.workflow_state !== currentStateCheck) {
-			console.warn(`Utils.changeWorkflowState(): Current state is not ${currentStateCheck}. State change aborted.`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.changeWorkflowState(): Current state is not ${currentStateCheck}. State change aborted.`);
 			return;
 		}
 		frm.set_value("workflow_state", newState);
@@ -359,13 +375,15 @@ const Utils = (function () {
 	 *   debug: true
 	 * });
 	 */
-	const makeReadOnly = ({
-		fields = [],
-		permissions = [],
-		exceptionStates = [],
-		preserveReadonly = false,
-		debug = false
-	} = {}) => {
+	const makeReadOnly = (props = {}) => {
+		const {
+			fields = [],
+			permissions = [],
+			exceptionStates = [],
+			preserveReadonly = false,
+			debug = false
+		} = props
+
 		const frm = cur_frm;
 		if (!frm || !frm.doc || !frm.fields_dict) {
 			if (debug && site.getEnvironment() === 'development') console.warn("Utils.makeReadOnly(): Invalid Frappe form object provided.");
@@ -396,7 +414,7 @@ const Utils = (function () {
 					if (debug && site.getEnvironment() === 'development') console.debug(`Utils.makeReadOnly(): Preserving field "${field}" as readonly.`);
 					return;
 				}
-				console.log(`Setting ${field} to read_only: ${isExceptionState ? 0 : 1}`);
+				if (debug && site.getEnvironment() === 'development') console.log(`Setting ${field} to read_only: ${isExceptionState ? 0 : 1}`);
 				frm.set_df_property(field, "read_only", isExceptionState ? 0 : 1);
 				frm.refresh_field(field);
 			} else if (debug && site.getEnvironment() === 'development') {
@@ -462,16 +480,18 @@ const Utils = (function () {
 	 * // Navigate to the tab with fieldname "details_tab"
 	 * Utils.goToTab({ tab: "details_tab" });
 	 */
-	const goToTab = ({ tab } = {}) => {
+	const goToTab = (props = {}) => {
+		const { tab, debug } = props
+
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			console.warn("Utils.goToTab(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab(): Invalid Frappe form object provided.");
 			return;
 		}
 		// Use the refactored getFieldsInTab that accepts { tab }.
 		const { fields, json } = getFieldsInTab({ tab });
 		if (!fields || fields.length === 0) {
-			console.warn(`Utils.goToTab(): Tab with fieldname "${tab}" not found or contains no valid fields.`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.goToTab(): Tab with fieldname "${tab}" not found or contains no valid fields.`);
 			return;
 		}
 		const firstValidField = fields.find(fieldname => {
@@ -479,7 +499,7 @@ const Utils = (function () {
 			return fieldMeta && fieldMeta.fieldtype !== "Column Break" && fieldMeta.fieldtype !== "Section Break";
 		});
 		if (!firstValidField) {
-			console.warn(`Utils.goToTab(): No scrollable fields found in tab "${tab}".`);
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.goToTab(): No scrollable fields found in tab "${tab}".`);
 			return;
 		}
 		frm.scroll_to_field(firstValidField);
@@ -490,25 +510,29 @@ const Utils = (function () {
 	 *
 	 * This function depends on the getTabs API to retrieve the list of tabs and then calls goToTab using the refactored props.
 	 *
+	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
+	 *
 	 * @example
 	 * // Navigate to the next tab
 	 * goToTab.next();
 	 */
-	goToTab.next = () => {
+	goToTab.next = (props = {}) => {
+		const { debug } = props
+
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
-			console.warn("Utils.goToTab.next(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.next(): No tabs found in the form.");
 			return;
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
-			console.warn("Utils.goToTab.next(): No active tab found.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.next(): No active tab found.");
 			return;
 		}
 		const currentTab = activeTabLink.data("fieldname");
 		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
-			console.warn("Utils.goToTab.next(): Current tab not found in the list of tabs.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.next(): Current tab not found in the list of tabs.");
 			return;
 		}
 		const nextTabIndex = currentTabIndex + 1;
@@ -516,7 +540,7 @@ const Utils = (function () {
 			const nextTab = tabs[nextTabIndex];
 			goToTab({ tab: nextTab });
 		} else {
-			console.warn("Utils.goToTab.next(): No next tab found. You are already on the last tab.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.next(): No next tab found. You are already on the last tab.");
 		}
 	};
 
@@ -525,25 +549,29 @@ const Utils = (function () {
 	 *
 	 * This function depends on the getTabs API to retrieve the list of tabs and then calls goToTab using the refactored props.
 	 *
+	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
+	 *
 	 * @example
 	 * // Navigate to the previous tab
 	 * goToTab.previous();
 	 */
-	goToTab.previous = () => {
+	goToTab.previous = (props = {}) => {
+		const { debug } = props
+
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
-			console.warn("Utils.goToTab.previous(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.previous(): No tabs found in the form.");
 			return;
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
-			console.warn("Utils.goToTab.previous(): No active tab found.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.previous(): No active tab found.");
 			return;
 		}
 		const currentTab = activeTabLink.data("fieldname");
 		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
-			console.warn("Utils.goToTab.previous(): Current tab not found in the list of tabs.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.previous(): Current tab not found in the list of tabs.");
 			return;
 		}
 		const previousTabIndex = currentTabIndex - 1;
@@ -551,7 +579,7 @@ const Utils = (function () {
 			const previousTab = tabs[previousTabIndex];
 			goToTab({ tab: previousTab });
 		} else {
-			console.warn("Utils.goToTab.previous(): No previous tab found. You are already on the first tab.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.previous(): No previous tab found. You are already on the first tab.");
 		}
 	};
 
@@ -613,6 +641,7 @@ const Utils = (function () {
 	/**
 	 * Determines if the current tab has a next tab.
 	 *
+	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
 	 *
 	 * @returns {{hasNext: boolean, nextTab: string|null}} An object containing:
 	 *   - hasNext: True if a next tab exists.
@@ -624,21 +653,23 @@ const Utils = (function () {
 	 *   console.log("Next tab:", nextTab);
 	 * }
 	 */
-	const hasNextTab = () => {
+	const hasNextTab = (props = {}) => {
+		const { debug } = props
+
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
-			console.warn("Utils.hasNextTab(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasNextTab(): No tabs found in the form.");
 			return { hasNext: false, nextTab: null };
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
-			console.warn("Utils.hasNextTab(): No active tab found.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasNextTab(): No active tab found.");
 			return { hasNext: false, nextTab: null };
 		}
 		const currentTab = activeTabLink.data("fieldname");
 		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
-			console.warn("Utils.hasNextTab(): Current tab not found in the list of tabs.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasNextTab(): Current tab not found in the list of tabs.");
 			return { hasNext: false, nextTab: null };
 		}
 		const nextTabIndex = currentTabIndex + 1;
@@ -651,6 +682,7 @@ const Utils = (function () {
 	/**
 	 * Determines if the current tab has a next tab
 	 *
+	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
 	 *
 	 * @returns {{hasPrevious: boolean, previousTab: string|null}} An object containing:
 	 *   - hasPrevious: True if a previous tab exists.
@@ -662,21 +694,23 @@ const Utils = (function () {
 	 *   console.log("Previous tab:", previousTab);
 	 * }
 	 */
-	const hasPreviousTab = () => {
+	const hasPreviousTab = (props = {}) => {
+		const { debug } = props
+
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
-			console.warn("Utils.hasPreviousTab(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasPreviousTab(): No tabs found in the form.");
 			return { hasPrevious: false, previousTab: null };
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
-			console.warn("Utils.hasPreviousTab(): No active tab found.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasPreviousTab(): No active tab found.");
 			return { hasPrevious: false, previousTab: null };
 		}
 		const currentTab = activeTabLink.data("fieldname");
 		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
-			console.warn("Utils.hasPreviousTab(): Current tab not found in the list of tabs.");
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasPreviousTab(): Current tab not found in the list of tabs.");
 			return { hasPrevious: false, previousTab: null };
 		}
 		const previousTabIndex = currentTabIndex - 1;
@@ -883,7 +917,7 @@ const Utils = (function () {
 			if (btnConfig && typeof btnConfig.callback === "function") {
 				btnConfig.callback(frm, tab);
 			} else {
-				console.log("Custom button clicked on tab " + tab);
+				if (debug && site.getEnvironment() === 'development') console.log("Custom button clicked on tab " + tab);
 			}
 		});
 	}
@@ -898,6 +932,8 @@ const Utils = (function () {
 	 * available from the current workflow state of the document and then maps these transitions
 	 * to extract the action names.
 	 *
+	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
+	 *
 	 * @returns {string[]} An array of allowed workflow action names.
 	 *
 	 * @example
@@ -905,15 +941,17 @@ const Utils = (function () {
 	 * const actions = Utils.getActions();
 	 * console.log(actions); // e.g. ["Approve", "Reject"]
 	 */
-	const getActions = () => {
-		console.warn('This [getActions] method is deprecated and will be removed in version 2.0.0 Please use the [workflow.getActions] method instead. ')
+	const getActions = (props = {}) => {
+		const { debug } = props
+
+		if (debug && site.getEnvironment() === 'development') console.warn('This [getActions] method is deprecated and will be removed in version 2.0.0 Please use the [workflow.getActions] method instead. ')
 		try {
 			// Get transitions for the current state using the helper.
 			const transitions = getWorkflowTransitions();
 			// Map the transitions to their action names.
 			return transitions.map(transition => transition.action);
 		} catch (error) {
-			console.warn("Error in getActions:", error);
+			if (debug && site.getEnvironment() === 'development') console.warn("Error in getActions:", error);
 			return [];
 		}
 	};
@@ -956,7 +994,7 @@ const Utils = (function () {
 
 			if (!action) {
 				if (debug && site.getEnvironment() === 'development') {
-					console.warn("Utils.action.confirm(): No action provided.");
+					if (debug && site.getEnvironment() === 'development') console.warn("Utils.action.confirm(): No action provided.");
 				}
 				return;
 			}
@@ -1402,9 +1440,6 @@ const Utils = (function () {
 		addTabButtons: addTabButtons,
 		hasNextTab: hasNextTab,
 		hasPreviousTab: hasPreviousTab,
-		getAllWorkflowTransitions,
-		getWorkflowTransitions,
-		getActions: getActions,
 		action: action,
 		workflow: workflow,
 		site: site
