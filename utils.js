@@ -1440,9 +1440,6 @@ const Utils = (function () {
 		addTabButtons: addTabButtons,
 		hasNextTab: hasNextTab,
 		hasPreviousTab: hasPreviousTab,
-		getAllWorkflowTransitions,
-		getWorkflowTransitions,
-		getActions: getActions,
 		action: action,
 		workflow: workflow,
 		site: site
