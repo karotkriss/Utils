@@ -63,6 +63,32 @@ const Utils = (function () {
 	}
 
 	/**
+	 * Converts an input string to camelCase format.
+	 *
+	 * @private
+	 * @param {string} input - The input string to be converted (e.g., "Submit Application").
+	 * @returns {string} The camelCase string.
+	 *
+	 * @example
+	 * const result = toCamelCase("Submit Application");
+	 * console.log(result); // "submitApplication"
+	 */
+	const toCamelCase = (input) => {
+
+		const words = input.split(' ').filter(Boolean);
+
+		const camelCase = words
+			.map((word, index) => {
+				if (index === 0) return word.toLowerCase();
+				return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+			})
+			.join('');
+
+		return camelCase;
+	};
+
+
+	/**
 	 * Retrieves all "Tab Break" fields from the global form (cur_frm) and returns an object containing:
 	 * - an array of tab fieldnames,
 	 * - a JSON mapping of each tab fieldname to its corresponding field definition.
@@ -994,10 +1020,13 @@ const Utils = (function () {
 
 			if (!action) {
 				if (debug && site.getEnvironment() === 'development') {
-					if (debug && site.getEnvironment() === 'development') console.warn("Utils.action.confirm(): No action provided.");
+					console.warn("Utils.action.confirm(): No action provided.");
 				}
 				return;
 			}
+
+			if (frappe[`__${toCamelCase(action)}Confirm`]) return;
+			frappe[`__${toCamelCase(action)}Confirm`] = true
 
 			frappe.ui.form.on(cur_frm.doc.doctype, {
 				before_workflow_action: async () => {
