@@ -461,7 +461,7 @@ const Utils = (function () {
 	 * // Hide fields "phone" and "email" unless the workflow state is "Draft"
 	 * Utils.hideFields({ fields: ["phone", "email"], exceptionStates: ["Draft"] });
 	 */
-	const hideFields = (props) => {
+	const hideFields = (props = {}) => {
 		const { fields = [], exceptionStates = [], debug, conditional } = props
 
 		const frm = cur_frm;
@@ -484,8 +484,13 @@ const Utils = (function () {
 
 		fields.forEach(field => {
 			if (frm.fields_dict[field]) {
-				if (debug && site.getEnvironment() === 'development') console.debug(`Setting ${field} to hidden: ${isExceptionState || conditional() ? 0 : 1}`);
-				frm.set_df_property(field, "hidden", isExceptionState || conditional() ? 0 : 1);
+				let condition = false
+				if (conditional(window.cur_frm)) {
+					condition = true
+				}
+
+				if (debug && site.getEnvironment() === 'development') console.debug(`Setting ${field} to hidden: ${isExceptionState || !condition ? 0 : 1}`);
+				frm.set_df_property(field, "hidden", isExceptionState || !condition ? 0 : 1);
 				frm.refresh_field(field);
 			} else {
 				if (debug && site.getEnvironment() === 'development') console.warn(`Utils.hideFields(): Field "${field}" does not exist in the form or cannot be hidden.`);
