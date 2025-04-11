@@ -948,7 +948,7 @@ const Utils = (function () {
 			if (btnConfig && typeof btnConfig.callback === "function") {
 				btnConfig.callback(frm, tab);
 			} else {
-				if (debug && site.getEnvironment() === 'development') console.log("Custom button clicked on tab " + tab);
+				if (props.debug && site.getEnvironment() === 'development') console.log("Custom button clicked on tab " + tab);
 			}
 		});
 	}
