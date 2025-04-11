@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.1.0] - 2025-04-11
+
+### Added
+  - **Disabled Prop for Custom Buttons:**
+    Added support for a new property `disable` (boolean) on custom button configuration objects. When set to `true`, the corresponding custom button is rendered with the HTML `disabled` attribute.
+
+  - **Data Attributes for Custom Buttons:**
+    Added the `data-label` attribute on custom buttons (populated with the button's label). This facilitates referencing the custom buttons by label in the returned object.
+
+  - **Return Object Structure:**
+    Updated the `addTabButtons()` function to return an object where each tab's key maps to a nested object containing jQuery objects for:
+      - `previous`: The previous button.
+      - `next`: The next button.
+      - Custom buttons: Mapped by their label (e.g., `"Submit": jqueryObj`).
+
+  - **Navigation Container Identification:**
+    Modified the navigation container markup to include a `data-tab` attribute, which ensures that the proper nav container is selected when retrieving button references.
+
+### Fixed
+  - **Custom Buttons Visibility:**
+    Resolved an issue where custom buttons were not displayed because the navigation container selector was expecting a `data-tab` attribute that was missing. With the updated markup, the custom buttons now appear as expected.
+
 ## [2.0.1] - 2025-04-09
 
 ### Added
