@@ -916,7 +916,6 @@ const Utils = (function () {
 			const prevButton = $nav.find('button[data-direction="previous"]');
 			const nextButton = $nav.find('button[data-direction="next"]');
 			const customButtons = $nav.find('button.custom-tab-button');
-			console.log(customButtons)
 
 			buttonRefs[tabFieldname] = {
 				previous: prevButton,
@@ -926,7 +925,6 @@ const Utils = (function () {
 			customButtons.each(function (index, elem) {
 				const btnLabel = $(elem).data("label");
 				buttonRefs[tabFieldname][btnLabel] = $(elem);
-				console.log($(elem))
 			});
 		});
 
