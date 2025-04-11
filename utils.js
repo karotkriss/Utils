@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 2.0.2
+ * @version 2.1.0
  * 
  * @module Utils
  */
@@ -850,6 +850,8 @@ const Utils = (function () {
 			$tab_nav.remove();
 		}
 		// Append navigation buttons to each .tab-pane.
+		const buttonRefs = {};
+
 		$(".tab-pane").each(function () {
 			const tabId = $(this).attr("id");
 			const tabFieldname = tabId.split("-").pop().replace("-tab", "");
@@ -881,7 +883,8 @@ const Utils = (function () {
 							const variantClass = btn.variant && variantMapping[btn.variant]
 								? variantMapping[btn.variant]
 								: "btn-primary";
-							return `<button class="btn ${className} ${variantClass} float-right custom-tab-button" data-tab="${tabFieldname}" data-cb-index="${index}">${label}</button>`;
+							const disabledAttr = btn.disabled ? "disabled" : "";
+							return `<button class="btn ${className} ${variantClass} float-right custom-tab-button" data-tab="${tabFieldname}" data-cb-index="${index}" data-label="${label}" ${disabledAttr}>${label}</button>`;
 						})
 						.join(" ");
 				}
@@ -896,7 +899,7 @@ const Utils = (function () {
 						: `<button class="btn btn-primary ${className} float-right invisible" disabled>Next</button>`;
 
 			const buttonHtml = `
-		  <div class="flex form-section-buttons justify-between nav-buttons w-100">
+		  <div class="flex form-section-buttons justify-between nav-buttons w-100" data-tab="${tabFieldname}">
 			<div class="flex section-body w-100 py-3">
 			  <div class="form-column col-sm-6">
 				${previousButtonHTML}
@@ -908,6 +911,21 @@ const Utils = (function () {
 		  </div>
 		`;
 			$(this).append(buttonHtml);
+
+			const $nav = $(this).find(`.nav-buttons[data-tab="${tabFieldname}"]`);
+			const prevButton = $nav.find('button[data-direction="previous"]');
+			const nextButton = $nav.find('button[data-direction="next"]');
+			const customButtons = $nav.find('button.custom-tab-button');
+
+			buttonRefs[tabFieldname] = {
+				previous: prevButton,
+				next: nextButton
+			};
+
+			customButtons.each(function (index, elem) {
+				const btnLabel = $(elem).data("label");
+				buttonRefs[tabFieldname][btnLabel] = $(elem);
+			});
 		});
 
 		// Event handler for navigation buttons (Previous/Next).
@@ -951,6 +969,8 @@ const Utils = (function () {
 				if (props.debug && site.getEnvironment() === 'development') console.log("Custom button clicked on tab " + tab);
 			}
 		});
+
+		return buttonRefs;
 	}
 
 
