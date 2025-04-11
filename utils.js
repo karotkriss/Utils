@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 2.1.0
+ * @version 2.1.1
  * 
  * @module Utils
  */
@@ -837,6 +837,7 @@ const Utils = (function () {
 			primary: "btn-primary",
 			secondary: "btn-secondary",
 			destructive: "btn-danger",
+			success: "btn-success",
 			outline: "btn-outline",
 			ghost: "btn-ghost"
 		};
