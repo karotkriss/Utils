@@ -881,7 +881,8 @@ const Utils = (function () {
 							const variantClass = btn.variant && variantMapping[btn.variant]
 								? variantMapping[btn.variant]
 								: "btn-primary";
-							return `<button class="btn ${className} ${variantClass} float-right custom-tab-button" data-tab="${tabFieldname}" data-cb-index="${index}">${label}</button>`;
+							const disabledAttr = btn.disabled ? "disabled" : "";
+							return `<button class="btn ${className} ${variantClass} float-right custom-tab-button" data-tab="${tabFieldname}" data-cb-index="${index}" ${disabledAttr}>${label}</button>`;
 						})
 						.join(" ");
 				}
