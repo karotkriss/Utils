@@ -872,7 +872,7 @@ const Utils = (function () {
 						btn.tab === tabFieldname &&
 						(
 							!btn.workflowStates ||
-							(Array.isArray(btn.workflowStates) && btn.workflowStates.indexOf(frm.doc.workflow_state) !== -1)
+							(Array.isArray(btn.workflowStates) && btn.workflowStates.includes(frm.doc.workflow_state))
 						) &&
 						(typeof btn.conditional !== "function" || btn.conditional(frm))
 					);
@@ -950,6 +950,7 @@ const Utils = (function () {
 		});
 
 		// Event handler for custom buttons.
+		$(document).off("click", ".custom-tab-button");
 		$(document).on("click", ".custom-tab-button", function () {
 			const tab = $(this).data("tab");
 			const cbIndex = parseInt($(this).data("cb-index"), 10);
