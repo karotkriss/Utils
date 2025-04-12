@@ -1,10 +1,14 @@
 # Changelog
 
+## [2.1.2] - 2025-04-12
+
+### Fixed
+  - workflow state detection for `addTabButtons`
+
 ## [2.1.1] - 2025-04-11
 
 ### Fixed
   - add missing variant for custom tab buttons: `success`
-   
 
 ## [2.1.0] - 2025-04-11
 
