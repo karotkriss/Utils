@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.2.0] - 2025-04-12
+
+### Added
+  - autoSave after changing workflow state
+
 ## [2.1.2] - 2025-04-12
 
 ### Fixed
