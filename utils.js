@@ -367,7 +367,7 @@ const Utils = (function () {
 	 * Utils.changeWorkflowState({ newState: "Approved", currentStateCheck: "Pending" });
 	 */
 	const changeWorkflowState = (props = {}) => {
-		const { newState, currentStateCheck, debug } = props
+		const { newState, currentStateCheck, autoSave = true, debug } = props
 		const frm = cur_frm;
 		if (!frm) {
 			if (debug && site.getEnvironment() === 'development') console.warn("Utils.changeWorkflowState(): Invalid Frappe form object provided.");
@@ -379,6 +379,10 @@ const Utils = (function () {
 		}
 		frm.set_value("workflow_state", newState);
 		frm.refresh_field("workflow_state");
+
+		if (autoSave) {
+			frm.save()
+		}
 	}
 
 	/**
@@ -874,7 +878,7 @@ const Utils = (function () {
 							!btn.workflowStates ||
 							(Array.isArray(btn.workflowStates) && btn.workflowStates.includes(frm.doc.workflow_state))
 						) &&
-						(typeof btn.conditional !== "function" || btn.conditional(frm))
+						(typeof btn.conditional !== "function" || !btn.conditional || btn.conditional(frm))
 					);
 				});
 				if (filtered.length) {
