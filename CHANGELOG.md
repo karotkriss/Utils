@@ -4,7 +4,7 @@
 
 ### Fixed
   - **Tab Content bleeding into each other:**
-  - prevent double clicking for tab navigation buttons, clicking in rapid succession caused rending issues after saving triggers `frappe.dom.freeze()`
+    - prevent double clicking for tab navigation buttons, clicking in rapid succession caused rendering issues after saving triggers `frappe.dom.freeze()`
 
 ## [2.2.0] - 2025-04-12
 
