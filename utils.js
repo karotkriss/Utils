@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 2.2.0
+ * @version 2.2.1
  * 
  * @module Utils
  */
@@ -934,7 +934,12 @@ const Utils = (function () {
 		});
 
 		// Event handler for navigation buttons (Previous/Next).
+		$(document).off("click", ".tab-navigation");
 		$(document).on("click", ".tab-navigation", function () {
+			$(this).prop('disabled', true)
+			setTimeout(() => {
+				$(this).prop('disabled', false)
+			}, 1000);
 			const direction = $(this).data("direction");
 			const currentTabFieldname = $("#form-tabs li a.active").data("fieldname");
 			const saveTabs = props.saveTabs || [];
@@ -956,6 +961,10 @@ const Utils = (function () {
 		// Event handler for custom buttons.
 		$(document).off("click", ".custom-tab-button");
 		$(document).on("click", ".custom-tab-button", function () {
+			$(this).prop('disabled', true)
+			setTimeout(() => {
+				$(this).prop('disabled', false)
+			}, 1000);
 			const tab = $(this).data("tab");
 			const cbIndex = parseInt($(this).data("cb-index"), 10);
 			const applicableButtons = (props.buttons || []).filter(function (btn) {
