@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.2] - 2025-04-28
+
+### Fixed
+  - **Minor CSS inconsistency:**
+    - the buttons from `addTabButtons()` contained questionable padding on its buttons.
+
 ## [2.2.1] - 2025-04-14
 
 ### Fixed
