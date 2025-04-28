@@ -906,10 +906,10 @@ const Utils = (function () {
 			const buttonHtml = `
 		  <div class="flex form-section-buttons justify-between nav-buttons w-100" data-tab="${tabFieldname}">
 			<div class="flex section-body w-100 py-3">
-			  <div class="form-column col-sm-6">
+			  <div class="form-column col-sm-6 px-0">
 				${previousButtonHTML}
 			  </div>
-			  <div class="form-column col-sm-6">
+			  <div class="form-column col-sm-6 px-0">
 				${rightButtonHTML}
 			  </div>
 			</div>
