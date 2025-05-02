@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 2.2.1
+ * @version 2.2.2
  * 
  * @module Utils
  */
@@ -153,12 +153,12 @@ const Utils = (function () {
 	/**
 	 * Retrieves all fields within a specified tab from the current form.
 	 *
-	 * @param {Object} [props] - The configuration object.
-	 * @param {string} [props.tab] - The fieldname of the target tab.
+	 * @param {Object} [props={}] - The configuration object.
+	 * @param {string} props.tab - The fieldname of the target tab break field.
 	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
 	 * @returns {{fields: string[], json: Object}} An object containing:
 	 *   - fields: An array of fieldnames present within the tab.
-	 *   - json: An object mapping each fieldname to its field definition.
+	 *   - json: An object mapping each fieldname to its field definition. Returns { fields: [], json: {} } if tab not found or form is invalid.
 	 *
 	 * @example
 	 * // Retrieve fields in a tab named "my_tab"
@@ -167,96 +167,67 @@ const Utils = (function () {
 	 * console.log("Field definitions:", json);
 	 */
 	const getFieldsInTab = (props = {}) => {
-		const { tab, debug } = props
+		const { tab, debug = false } = props;
+		const frm = window.cur_frm;
 
-		const frm = cur_frm;
+		// Initial check for valid form and fields metadata
 		if (!frm?.meta?.fields) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getFieldsInTab(): Invalid Frappe form object provided.");
-			return {};
+			if (debug && site.getEnvironment() === 'development') {
+				console.warn("Utils.getFieldsInTab(): Invalid Frappe form object provided.");
+			}
+			return { fields: [], json: {} }; // Return default empty structure
 		}
 
-		const fieldsInTab = [];
-		const fieldsInTabJSON = {};
-		let collectFields = false;
-		let tabFound = false;
+		const allFields = frm.meta.fields;
 
-		frm.meta.fields.forEach(field => {
-			if (field.fieldtype === "Tab Break") {
-				if (field.fieldname === tab) {
-					tabFound = true;
-					collectFields = true;
-				} else if (collectFields) {
-					collectFields = false;
-				}
-			}
-			if (collectFields && field.fieldtype !== "Tab Break") {
-				fieldsInTab.push(field.fieldname);
-				fieldsInTabJSON[field.fieldname] = field;
-			}
-		});
+		// Find the index of the "Tab Break" field that marks the start of the target tab
+		const tabStartIndex = allFields.findIndex(
+			(field) => field.fieldtype === "Tab Break" && field.fieldname === tab
+		);
 
-		if (!tabFound) {
-			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInTab(): Tab with fieldname "${tab}" not found.`);
-		} else if (fieldsInTab.length === 0) {
-			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInTab(): No fields found in tab "${tab}".`);
+		// If the target tab wasn't found, log a warning (if debugging) and return empty
+		if (tabStartIndex === -1) {
+			if (debug && site.getEnvironment() === 'development') {
+				console.warn(`Utils.getFieldsInTab(): Tab with fieldname "${tab}" not found.`);
+			}
+			return { fields: [], json: {} };
 		}
 
-		return { fields: fieldsInTab, json: fieldsInTabJSON };
-	}
+		// Find the index of the *next* "Tab Break" after the starting one.
+		// This marks the end of the current tab's content.
+		const tabEndIndex = allFields.findIndex(
+			(field, index) => index > tabStartIndex && field.fieldtype === "Tab Break"
+		);
 
+		// Slice the array to get only the fields physically located between the start tab break
+		// and the next tab break (or the end of the fields array if it's the last tab).
+		// We slice *after* the starting tab break field (tabStartIndex + 1).
+		const fieldsInSection = allFields.slice(
+			tabStartIndex + 1,
+			// If tabEndIndex is -1, it means no more Tab Breaks were found, so slice to the end.
+			tabEndIndex === -1 ? undefined : tabEndIndex
+		);
 
-	/**
-	 * Retrieves all fields within a specified section from the current form.
-	 *
-	 * @param {Object} [props] - The configuration object.
-	 * @param {string} [props.section] - The fieldname of the target section.
-	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
-	 * @returns {{fields: string[], json: Object}} An object containing:
-	 *   - fields: An array of fieldnames present within the section.
-	 *   - json: An object mapping each fieldname to its field definition.
-	 *
-	 * @example
-	 * // Retrieve fields in a section named "my_section"
-	 * const { fields, json } = Utils.getFieldsInSection({ section: "my_section" });
-	 * console.log("Section Fields:", fields);
-	 * console.log("Field Definitions:", json);
-	 */
-	const getFieldsInSection = (props = {}) => {
-		const { section, debug } = props
+		// Use reduce to efficiently build the fields array and the json map in one pass
+		const result = fieldsInSection.reduce(
+			(accumulator, field) => {
+				// Since we sliced correctly, we assume fields here belong to the tab.
+				// The original function didn't explicitly filter out Sections/Columns *within* a tab,
+				// so we maintain that behavior unless specified otherwise.
+				accumulator.fields.push(field.fieldname);
+				accumulator.json[field.fieldname] = field;
+				return accumulator;
+			},
+			{ fields: [], json: {} }
+		);
 
-		const frm = cur_frm;
-		if (!frm?.meta?.fields) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getFieldsInSection(): Invalid Frappe form object provided.");
-			return {};
+		// Log a warning if the tab was found but contained no fields
+		if (debug && site.getEnvironment() === 'development' && result.fields.length === 0) {
+			console.warn(`Utils.getFieldsInTab(): No fields found within tab "${tab}".`);
 		}
 
-		const fieldsInSection = [];
-		const fieldsInSectionJSON = {};
-		let collectFields = false;
-		let sectionFound = false;
-
-		frm.meta.fields.forEach(field => {
-			if (field.fieldtype === "Section Break") {
-				if (field.fieldname === section) {
-					sectionFound = true;
-					collectFields = true;
-				} else if (collectFields) {
-					collectFields = false;
-				}
-			}
-			if (collectFields && field.fieldtype !== "Section Break") {
-				fieldsInSection.push(field.fieldname);
-				fieldsInSectionJSON[field.fieldname] = field;
-			}
-		});
-
-		if (!sectionFound) {
-			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInSection(): Section with fieldname "${section}" not found.`);
-		} else if (fieldsInSection.length === 0) {
-			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInSection(): No fields found in section "${section}".`);
-		}
-		return { fields: fieldsInSection, json: fieldsInSectionJSON };
-	}
+		return result;
+	};
 
 	/**
 	 * Retrieves all fields within a specified column from the current form.

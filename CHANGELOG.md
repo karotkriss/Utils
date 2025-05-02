@@ -1,10 +1,12 @@
 # Changelog
 
-## [2.2.2] - 2025-04-28
+## [2.2.2] - 2025-04-29
 
-### Fixed
-  - **Minor CSS inconsistency:**
-    - the buttons from `addTabButtons()` contained questionable padding on its buttons.
+### Changed
+- **Refactored `getFieldsInTab()`:**
+  - Improved code readability and maintainability by removing intermediate state variables (`collectFields`, `tabFound`).
+  - Leveraged standard ES6 array methods (`findIndex`, `slice`, `reduce`) for a more declarative and potentially efficient approach.
+  - Ensured functional equivalence with the previous implementation, maintaining existing behavior.
 
 ## [2.2.1] - 2025-04-14
 
