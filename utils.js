@@ -230,6 +230,59 @@ const Utils = (function () {
 	};
 
 	/**
+	 * Retrieves all fields within a specified section from the current form.
+	 *
+	 * @param {Object} [props] - The configuration object.
+	 * @param {string} [props.section] - The fieldname of the target section.
+	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
+	 * @returns {{fields: string[], json: Object}} An object containing:
+	 *   - fields: An array of fieldnames present within the section.
+	 *   - json: An object mapping each fieldname to its field definition.
+	 *
+	 * @example
+	 * // Retrieve fields in a section named "my_section"
+	 * const { fields, json } = Utils.getFieldsInSection({ section: "my_section" });
+	 * console.log("Section Fields:", fields);
+	 * console.log("Field Definitions:", json);
+	 */
+	const getFieldsInSection = (props = {}) => {
+		const { section, debug } = props
+
+		const frm = cur_frm;
+		if (!frm?.meta?.fields) {
+			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getFieldsInSection(): Invalid Frappe form object provided.");
+			return {};
+		}
+
+		const fieldsInSection = [];
+		const fieldsInSectionJSON = {};
+		let collectFields = false;
+		let sectionFound = false;
+
+		frm.meta.fields.forEach(field => {
+			if (field.fieldtype === "Section Break") {
+				if (field.fieldname === section) {
+					sectionFound = true;
+					collectFields = true;
+				} else if (collectFields) {
+					collectFields = false;
+				}
+			}
+			if (collectFields && field.fieldtype !== "Section Break") {
+				fieldsInSection.push(field.fieldname);
+				fieldsInSectionJSON[field.fieldname] = field;
+			}
+		});
+
+		if (!sectionFound) {
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInSection(): Section with fieldname "${section}" not found.`);
+		} else if (fieldsInSection.length === 0) {
+			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInSection(): No fields found in section "${section}".`);
+		}
+		return { fields: fieldsInSection, json: fieldsInSectionJSON };
+	};
+
+	/**
 	 * Retrieves all fields within a specified column from the current form.
 	 *
 	 * @param {Object} props - The configuration object.
