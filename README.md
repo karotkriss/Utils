@@ -249,7 +249,7 @@ frappe.utilsPlus.goToTab.previous.save();
 
 ```javascript
 // Add navigation buttons
-Util.addTabButtons()
+Utils.addTabButtons()
 
 ```
 #### Styling Tab Buttons with the `className` prop
