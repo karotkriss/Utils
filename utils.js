@@ -11,6 +11,41 @@
  */
 const Utils = (function () {
 	/**
+	 * A specialized extension of the Frappe Communication Composer.
+	 * @class WorkflowCommunicationComposer
+	 * @extends frappe.views.CommunicationComposer
+	 */
+	class WorkflowCommunicationComposer extends frappe.views
+		.CommunicationComposer {
+		/**
+		 * @param {object} opts - The standard CommunicationComposer options, plus a custom callback.
+		 * @param {function} opts.on_send_click - A callback function that is executed immediately
+		 *   when the user clicks the "Send" button, *before* the email sending process begins.
+		 */
+		constructor(opts) {
+			super(opts);
+			this.on_send_click = opts.on_send_click;
+			this.action_triggered = false;
+		}
+
+		/**
+		 * Overrides the parent send_mail method.
+		 * This override immediately executes the custom `on_send_click` callback and then
+		 * proceeds to call the original `send_mail` method to send the email in the background.
+		 * @override
+		 */
+		send_action() {
+			if (this.on_send_click) {
+				this.action_triggered = true;
+				// Execute our custom logic immediately
+				this.on_send_click();
+			}
+
+			// Now, call the original parent method to perform the actual email sending
+			super.send_action();
+		}
+	}
+	/**
 	 * Checks if the current user has any of the specified roles.
 	 *
 	 * @private
@@ -1333,6 +1368,127 @@ const Utils = (function () {
 					await promise.catch(() => {
 						throw new Error("Workflow action cancelled.");
 					});
+				},
+			});
+		},
+		/**
+		 * Intercepts a workflow action by opening an email composer. The workflow action
+		 * and any field updates proceed after the user clicks "Send".
+		 *
+		 * @namespace Utils.action
+		 *
+		 * @param {Object} props - The configuration object.
+		 * @param {string} props.action - The workflow action name to intercept (e.g., "Reject", "Request Info").
+		 * @param {Object} [props.setValue] - An object of field-value pairs to set on the document before the workflow action proceeds.
+		 * @param {Object} [props.composer_args={}] - An object of arguments to pass directly to the CommunicationComposer.
+		 * @param {boolean} [props.debug=false] - Enable debug logging.
+		 *
+		 * @example
+		 * // On "Reject", set a 'rejection_timestamp', then force the user to send an email.
+		 * Utils.action.composeEmail({
+		 *   action: "Reject",
+		 *   debug: true,
+		 *   setValue: {
+		 *     rejection_timestamp: frappe.datetime.now_datetime()
+		 *   },
+		 *   composer_args: {
+		 *     recipients: cur_frm.doc.owner,
+		 *     subject: `Regarding your submission: ${cur_frm.doc.name}`,
+		 *     message: "Hello,\n\nWe are unable to proceed with your submission for the following reason(s):\n\n"
+		 *   }
+		 * });
+		 */
+		composeEmail: (props = {}) => {
+			const {
+				action,
+				composer_args = {},
+				setValue,
+				debug = false,
+			} = props;
+			const isDevelopment =
+				debug && site?.getEnvironment() === "development";
+
+			if (!action) {
+				if (isDevelopment)
+					console.warn(
+						"Utils.action.composeEmail(): No action provided."
+					);
+				return;
+			}
+
+			const fieldsToUpdate =
+				setValue &&
+				typeof setValue === "object" &&
+				Object.keys(setValue).length > 0
+					? setValue
+					: {};
+
+			const uniqueActionFlag = `__${toCamelCase(action)}ComposeIntercept`;
+			if (frappe[uniqueActionFlag]) return;
+			frappe[uniqueActionFlag] = true;
+
+			frappe.ui.form.on(cur_frm.doc.doctype, {
+				before_workflow_action: async () => {
+					if (cur_frm.selected_workflow_action !== action) return;
+
+					if (isDevelopment)
+						console.log(
+							`Intercepting Workflow Action with Email Composer: ${action}`
+						);
+					frappe.dom.unfreeze();
+
+					try {
+						await new Promise((resolve, reject) => {
+							const composer = new WorkflowCommunicationComposer({
+								doc: cur_frm.doc,
+								frm: cur_frm,
+								...composer_args,
+								on_send_click: resolve,
+							});
+							composer.dialog.onhide = () => {
+								if (!composer.action_triggered) {
+									reject(
+										new Error(
+											"Workflow action cancelled: Email composer was closed."
+										)
+									);
+								}
+							};
+						});
+
+						if (Object.keys(fieldsToUpdate).length > 0) {
+							if (isDevelopment) {
+								console.log(
+									"Utils.action.composeEmail(): Updating fields before workflow action proceeds.",
+									fieldsToUpdate
+								);
+							}
+
+							const response = await frappe.call({
+								method: "frappe.client.set_value",
+								args: {
+									doctype: cur_frm.doctype,
+									name: cur_frm.docname,
+									fieldname: fieldsToUpdate,
+								},
+							});
+
+							if (response && response.message) {
+								frappe.model.sync(response.message);
+								cur_frm.refresh_fields(
+									Object.keys(fieldsToUpdate)
+								);
+								if (isDevelopment) {
+									console.log(
+										"Utils.action.composeEmail(): Fields updated and form synced.",
+										response.message
+									);
+								}
+							}
+						}
+					} catch (error) {
+						throw error;
+					}
 				},
 			});
 		},
