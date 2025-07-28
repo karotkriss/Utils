@@ -6,11 +6,10 @@
  * automatically operating on the global cur_frm.
  *
  * @version 2.3.0
- * 
+ *
  * @module Utils
  */
 const Utils = (function () {
-
 	/**
 	 * Checks if the current user has any of the specified roles.
 	 *
@@ -39,19 +38,24 @@ const Utils = (function () {
 			if (!allowed) return [];
 
 			// Handle string format (comma-separated)
-			if (typeof allowed === 'string') {
-				return allowed.split(',').map(role => role.trim()).filter(Boolean);
+			if (typeof allowed === "string") {
+				return allowed
+					.split(",")
+					.map((role) => role.trim())
+					.filter(Boolean);
 			}
 
 			// Handle array format
 			if (Array.isArray(allowed)) {
-				return allowed.map(role =>
-					typeof role === 'string' ? role.trim() : String(role)
-				).filter(Boolean);
+				return allowed
+					.map((role) =>
+						typeof role === "string" ? role.trim() : String(role)
+					)
+					.filter(Boolean);
 			}
 
 			// Handle object format
-			if (typeof allowed === 'object') {
+			if (typeof allowed === "object") {
 				return Object.keys(allowed).filter(Boolean);
 			}
 
@@ -74,19 +78,19 @@ const Utils = (function () {
 	 * console.log(result); // "submitApplication"
 	 */
 	const toCamelCase = (input) => {
-
-		const words = input.split(' ').filter(Boolean);
+		const words = input.split(" ").filter(Boolean);
 
 		const camelCase = words
 			.map((word, index) => {
 				if (index === 0) return word.toLowerCase();
-				return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+				return (
+					word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+				);
 			})
-			.join('');
+			.join("");
 
 		return camelCase;
 	};
-
 
 	/**
 	 * Retrieves all "Tab Break" fields from the global form (cur_frm) and returns an object containing:
@@ -109,17 +113,20 @@ const Utils = (function () {
 	 * console.log("Tab Definitions:", json);
 	 */
 	const getTabs = (props = {}) => {
-		const { excludeHidden = false, debug = false } = props
+		const { excludeHidden = false, debug = false } = props;
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getTabs(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.getTabs(): Invalid Frappe form object provided."
+				);
 			return { tabs: [], json: {} };
 		}
 
 		const tabs = [];
 		const tabsJSON = {};
 
-		frm.meta.fields.forEach(field => {
+		frm.meta.fields.forEach((field) => {
 			if (field.fieldtype === "Tab Break") {
 				if (excludeHidden && field.hidden) return;
 				if (field.depends_on) {
@@ -131,11 +138,20 @@ const Utils = (function () {
 							expr = expr.replace(/\bdoc\./g, "frm.doc.");
 						}
 						if (!eval(expr)) {
-							if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getTabs(): Tab "${field.label}" dependency check failed. Expression: ${field.depends_on}`);
+							if (
+								debug &&
+								site.getEnvironment() === "development"
+							)
+								console.warn(
+									`Utils.getTabs(): Tab "${field.label}" dependency check failed. Expression: ${field.depends_on}`
+								);
 							return;
 						}
 					} catch (error) {
-						if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getTabs(): Error evaluating dependency for tab "${field.label}": ${error.message}`);
+						if (debug && site.getEnvironment() === "development")
+							console.warn(
+								`Utils.getTabs(): Error evaluating dependency for tab "${field.label}": ${error.message}`
+							);
 						return;
 					}
 				}
@@ -145,10 +161,11 @@ const Utils = (function () {
 		});
 
 		if (tabs.length === 0) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getTabs(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn("Utils.getTabs(): No tabs found in the form.");
 		}
 		return { tabs, json: tabsJSON };
-	}
+	};
 
 	/**
 	 * Retrieves all fields within a specified tab from the current form.
@@ -172,8 +189,10 @@ const Utils = (function () {
 
 		// Initial check for valid form and fields metadata
 		if (!frm?.meta?.fields) {
-			if (debug && site.getEnvironment() === 'development') {
-				console.warn("Utils.getFieldsInTab(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === "development") {
+				console.warn(
+					"Utils.getFieldsInTab(): Invalid Frappe form object provided."
+				);
 			}
 			return { fields: [], json: {} }; // Return default empty structure
 		}
@@ -182,13 +201,16 @@ const Utils = (function () {
 
 		// Find the index of the "Tab Break" field that marks the start of the target tab
 		const tabStartIndex = allFields.findIndex(
-			(field) => field.fieldtype === "Tab Break" && field.fieldname === tab
+			(field) =>
+				field.fieldtype === "Tab Break" && field.fieldname === tab
 		);
 
 		// If the target tab wasn't found, log a warning (if debugging) and return empty
 		if (tabStartIndex === -1) {
-			if (debug && site.getEnvironment() === 'development') {
-				console.warn(`Utils.getFieldsInTab(): Tab with fieldname "${tab}" not found.`);
+			if (debug && site.getEnvironment() === "development") {
+				console.warn(
+					`Utils.getFieldsInTab(): Tab with fieldname "${tab}" not found.`
+				);
 			}
 			return { fields: [], json: {} };
 		}
@@ -196,7 +218,8 @@ const Utils = (function () {
 		// Find the index of the *next* "Tab Break" after the starting one.
 		// This marks the end of the current tab's content.
 		const tabEndIndex = allFields.findIndex(
-			(field, index) => index > tabStartIndex && field.fieldtype === "Tab Break"
+			(field, index) =>
+				index > tabStartIndex && field.fieldtype === "Tab Break"
 		);
 
 		// Slice the array to get only the fields physically located between the start tab break
@@ -222,8 +245,14 @@ const Utils = (function () {
 		);
 
 		// Log a warning if the tab was found but contained no fields
-		if (debug && site.getEnvironment() === 'development' && result.fields.length === 0) {
-			console.warn(`Utils.getFieldsInTab(): No fields found within tab "${tab}".`);
+		if (
+			debug &&
+			site.getEnvironment() === "development" &&
+			result.fields.length === 0
+		) {
+			console.warn(
+				`Utils.getFieldsInTab(): No fields found within tab "${tab}".`
+			);
 		}
 
 		return result;
@@ -246,11 +275,14 @@ const Utils = (function () {
 	 * console.log("Field Definitions:", json);
 	 */
 	const getFieldsInSection = (props = {}) => {
-		const { section, debug } = props
+		const { section, debug } = props;
 
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getFieldsInSection(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.getFieldsInSection(): Invalid Frappe form object provided."
+				);
 			return {};
 		}
 
@@ -259,7 +291,7 @@ const Utils = (function () {
 		let collectFields = false;
 		let sectionFound = false;
 
-		frm.meta.fields.forEach(field => {
+		frm.meta.fields.forEach((field) => {
 			if (field.fieldtype === "Section Break") {
 				if (field.fieldname === section) {
 					sectionFound = true;
@@ -275,9 +307,15 @@ const Utils = (function () {
 		});
 
 		if (!sectionFound) {
-			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInSection(): Section with fieldname "${section}" not found.`);
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					`Utils.getFieldsInSection(): Section with fieldname "${section}" not found.`
+				);
 		} else if (fieldsInSection.length === 0) {
-			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInSection(): No fields found in section "${section}".`);
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					`Utils.getFieldsInSection(): No fields found in section "${section}".`
+				);
 		}
 		return { fields: fieldsInSection, json: fieldsInSectionJSON };
 	};
@@ -299,11 +337,14 @@ const Utils = (function () {
 	 * console.log("Field Definitions:", json);
 	 */
 	const getFieldsInColumn = (props = {}) => {
-		const { column, debug } = props
+		const { column, debug } = props;
 
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.getFieldsInColumn(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.getFieldsInColumn(): Invalid Frappe form object provided."
+				);
 			return {};
 		}
 
@@ -312,7 +353,7 @@ const Utils = (function () {
 		let collectFields = false;
 		let columnFound = false;
 
-		frm.meta.fields.forEach(field => {
+		frm.meta.fields.forEach((field) => {
 			if (field.fieldtype === "Column Break") {
 				if (field.fieldname === column) {
 					columnFound = true;
@@ -328,12 +369,18 @@ const Utils = (function () {
 		});
 
 		if (!columnFound) {
-			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInColumn(): Column with fieldname "${column}" not found.`);
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					`Utils.getFieldsInColumn(): Column with fieldname "${column}" not found.`
+				);
 		} else if (fieldsInColumn.length === 0) {
-			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.getFieldsInColumn(): No fields found in column "${column}".`);
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					`Utils.getFieldsInColumn(): No fields found in column "${column}".`
+				);
 		}
 		return { fields: fieldsInColumn, json: fieldsInColumnJSON };
-	}
+	};
 
 	/**
 	 * Checks mandatory fields in the current form and marks them as required if empty.
@@ -351,15 +398,18 @@ const Utils = (function () {
 	 * }
 	 */
 	const checkMandatory = (props = {}) => {
-		const { fields = [], debug } = props
+		const { fields = [], debug } = props;
 
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.checkMandatory(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.checkMandatory(): Invalid Frappe form object provided."
+				);
 			return [];
 		}
 		const missingFields = [];
-		fields.forEach(field => {
+		fields.forEach((field) => {
 			if (frm.fields_dict[field]) {
 				if (!frm.doc[field]) {
 					frm.set_df_property(field, "reqd", 1);
@@ -367,16 +417,19 @@ const Utils = (function () {
 					missingFields.push(field);
 				}
 			} else {
-				if (debug && site.getEnvironment() === 'development') console.warn(`Utils.checkMandatory(): Field "${field}" does not exist in the form or cannot be marked mandatory.`);
+				if (debug && site.getEnvironment() === "development")
+					console.warn(
+						`Utils.checkMandatory(): Field "${field}" does not exist in the form or cannot be marked mandatory.`
+					);
 			}
 		});
 
 		if (missingFields.length > 0) {
-			frm.dirty()
+			frm.dirty();
 		}
 
 		return missingFields.length > 0 ? missingFields : true;
-	}
+	};
 
 	/**
 	 * Changes the workflow state of the current form.
@@ -391,23 +444,29 @@ const Utils = (function () {
 	 * Utils.changeWorkflowState({ newState: "Approved", currentStateCheck: "Pending" });
 	 */
 	const changeWorkflowState = (props = {}) => {
-		const { newState, currentStateCheck, autoSave = true, debug } = props
+		const { newState, currentStateCheck, autoSave = true, debug } = props;
 		const frm = cur_frm;
 		if (!frm) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.changeWorkflowState(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.changeWorkflowState(): Invalid Frappe form object provided."
+				);
 			return;
 		}
 		if (currentStateCheck && frm.doc.workflow_state !== currentStateCheck) {
-			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.changeWorkflowState(): Current state is not ${currentStateCheck}. State change aborted.`);
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					`Utils.changeWorkflowState(): Current state is not ${currentStateCheck}. State change aborted.`
+				);
 			return;
 		}
 		frm.set_value("workflow_state", newState);
 		frm.refresh_field("workflow_state");
 
 		if (autoSave) {
-			frm.save()
+			frm.save();
 		}
-	}
+	};
 
 	/**
 	 * Sets the read_only property on specified fields based on conditions and permissions.
@@ -435,29 +494,40 @@ const Utils = (function () {
 			permissions = [],
 			exceptionStates = [],
 			preserveReadonly = false,
-			debug = false
-		} = props
+			debug = false,
+		} = props;
 
 		const frm = cur_frm;
 		if (!frm || !frm.doc || !frm.fields_dict) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.makeReadOnly(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.makeReadOnly(): Invalid Frappe form object provided."
+				);
 			return [];
 		}
 
 		// Skip updating if user has a bypass role.
 		if (Array.isArray(permissions) && userHasRole(permissions)) {
-			if (debug && site.getEnvironment() === 'development') console.debug("Utils.makeReadOnly(): User has bypass role, skipping read-only settings.");
+			if (debug && site.getEnvironment() === "development")
+				console.debug(
+					"Utils.makeReadOnly(): User has bypass role, skipping read-only settings."
+				);
 			return;
 		}
 
 		if (!Array.isArray(fields)) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.makeReadOnly(): 'fields' must be an array.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.makeReadOnly(): 'fields' must be an array."
+				);
 			return [];
 		}
 
-		const isExceptionState = exceptionStates.includes(cur_frm.doc.workflow_state);
+		const isExceptionState = exceptionStates.includes(
+			cur_frm.doc.workflow_state
+		);
 
-		fields.forEach(field => {
+		fields.forEach((field) => {
 			if (frm.fields_dict[field]) {
 				// If preserveReadonly is enabled and the field is already readonly, skip updating it.
 				if (
@@ -465,17 +535,31 @@ const Utils = (function () {
 					frm.fields_dict[field].df &&
 					frm.fields_dict[field].df.read_only
 				) {
-					if (debug && site.getEnvironment() === 'development') console.debug(`Utils.makeReadOnly(): Preserving field "${field}" as readonly.`);
+					if (debug && site.getEnvironment() === "development")
+						console.debug(
+							`Utils.makeReadOnly(): Preserving field "${field}" as readonly.`
+						);
 					return;
 				}
-				if (debug && site.getEnvironment() === 'development') console.log(`Setting ${field} to read_only: ${isExceptionState ? 0 : 1}`);
-				frm.set_df_property(field, "read_only", isExceptionState ? 0 : 1);
+				if (debug && site.getEnvironment() === "development")
+					console.log(
+						`Setting ${field} to read_only: ${
+							isExceptionState ? 0 : 1
+						}`
+					);
+				frm.set_df_property(
+					field,
+					"read_only",
+					isExceptionState ? 0 : 1
+				);
 				frm.refresh_field(field);
-			} else if (debug && site.getEnvironment() === 'development') {
-				console.warn(`Utils.makeReadOnly(): Field "${field}" does not exist in the form or cannot be set to read_only.`);
+			} else if (debug && site.getEnvironment() === "development") {
+				console.warn(
+					`Utils.makeReadOnly(): Field "${field}" does not exist in the form or cannot be set to read_only.`
+				);
 			}
 		});
-	}
+	};
 
 	/**
 	 * Hides or shows specified fields in the current form based on the workflow state.
@@ -490,41 +574,62 @@ const Utils = (function () {
 	 * Utils.hideFields({ fields: ["phone", "email"], exceptionStates: ["Draft"] });
 	 */
 	const hideFields = (props = {}) => {
-		const { fields = [], exceptionStates = [], debug, conditional } = props
+		const { fields = [], exceptionStates = [], debug, conditional } = props;
 
 		const frm = cur_frm;
 		if (!frm?.doc || !frm.fields_dict) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hideFields(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.hideFields(): Invalid Frappe form object provided."
+				);
 			return;
 		}
 
 		if (!Array.isArray(fields)) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hideFields(): 'fields' must be an array.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn("Utils.hideFields(): 'fields' must be an array.");
 			return;
 		}
 
-		if (conditional !== undefined && typeof conditional !== 'function') {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hideFields(): 'conditional' must be a function.");
+		if (conditional !== undefined && typeof conditional !== "function") {
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.hideFields(): 'conditional' must be a function."
+				);
 			return;
 		}
 
-		const isExceptionState = exceptionStates.includes(frm.doc.workflow_state);
+		const isExceptionState = exceptionStates.includes(
+			frm.doc.workflow_state
+		);
 
-		fields.forEach(field => {
+		fields.forEach((field) => {
 			if (frm.fields_dict[field]) {
-				let condition = false
+				let condition = false;
 				if (conditional(window.cur_frm)) {
-					condition = true
+					condition = true;
 				}
 
-				if (debug && site.getEnvironment() === 'development') console.debug(`Setting ${field} to hidden: ${isExceptionState || !condition ? 0 : 1}`);
-				frm.set_df_property(field, "hidden", isExceptionState || !condition ? 0 : 1);
+				if (debug && site.getEnvironment() === "development")
+					console.debug(
+						`Setting ${field} to hidden: ${
+							isExceptionState || !condition ? 0 : 1
+						}`
+					);
+				frm.set_df_property(
+					field,
+					"hidden",
+					isExceptionState || !condition ? 0 : 1
+				);
 				frm.refresh_field(field);
 			} else {
-				if (debug && site.getEnvironment() === 'development') console.warn(`Utils.hideFields(): Field "${field}" does not exist in the form or cannot be hidden.`);
+				if (debug && site.getEnvironment() === "development")
+					console.warn(
+						`Utils.hideFields(): Field "${field}" does not exist in the form or cannot be hidden.`
+					);
 			}
 		});
-	}
+	};
 
 	/**
 	 * Navigates to a specified tab in the current form and scrolls to its first valid field.
@@ -540,25 +645,38 @@ const Utils = (function () {
 	 * Utils.goToTab({ tab: "details_tab" });
 	 */
 	const goToTab = (props = {}) => {
-		const { tab, debug } = props
+		const { tab, debug } = props;
 
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab(): Invalid Frappe form object provided.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.goToTab(): Invalid Frappe form object provided."
+				);
 			return;
 		}
 		// Use the refactored getFieldsInTab that accepts { tab }.
 		const { fields, json } = getFieldsInTab({ tab });
 		if (!fields || fields.length === 0) {
-			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.goToTab(): Tab with fieldname "${tab}" not found or contains no valid fields.`);
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					`Utils.goToTab(): Tab with fieldname "${tab}" not found or contains no valid fields.`
+				);
 			return;
 		}
-		const firstValidField = fields.find(fieldname => {
+		const firstValidField = fields.find((fieldname) => {
 			const fieldMeta = json[fieldname];
-			return fieldMeta && fieldMeta.fieldtype !== "Column Break" && fieldMeta.fieldtype !== "Section Break";
+			return (
+				fieldMeta &&
+				fieldMeta.fieldtype !== "Column Break" &&
+				fieldMeta.fieldtype !== "Section Break"
+			);
 		});
 		if (!firstValidField) {
-			if (debug && site.getEnvironment() === 'development') console.warn(`Utils.goToTab(): No scrollable fields found in tab "${tab}".`);
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					`Utils.goToTab(): No scrollable fields found in tab "${tab}".`
+				);
 			return;
 		}
 		frm.scroll_to_field(firstValidField);
@@ -576,22 +694,29 @@ const Utils = (function () {
 	 * goToTab.next();
 	 */
 	goToTab.next = (props = {}) => {
-		const { debug } = props
+		const { debug } = props;
 
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.next(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.goToTab.next(): No tabs found in the form."
+				);
 			return;
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.next(): No active tab found.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn("Utils.goToTab.next(): No active tab found.");
 			return;
 		}
 		const currentTab = activeTabLink.data("fieldname");
 		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.next(): Current tab not found in the list of tabs.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.goToTab.next(): Current tab not found in the list of tabs."
+				);
 			return;
 		}
 		const nextTabIndex = currentTabIndex + 1;
@@ -599,7 +724,10 @@ const Utils = (function () {
 			const nextTab = tabs[nextTabIndex];
 			goToTab({ tab: nextTab });
 		} else {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.next(): No next tab found. You are already on the last tab.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.goToTab.next(): No next tab found. You are already on the last tab."
+				);
 		}
 	};
 
@@ -615,22 +743,29 @@ const Utils = (function () {
 	 * goToTab.previous();
 	 */
 	goToTab.previous = (props = {}) => {
-		const { debug } = props
+		const { debug } = props;
 
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.previous(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.goToTab.previous(): No tabs found in the form."
+				);
 			return;
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.previous(): No active tab found.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn("Utils.goToTab.previous(): No active tab found.");
 			return;
 		}
 		const currentTab = activeTabLink.data("fieldname");
 		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.previous(): Current tab not found in the list of tabs.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.goToTab.previous(): Current tab not found in the list of tabs."
+				);
 			return;
 		}
 		const previousTabIndex = currentTabIndex - 1;
@@ -638,16 +773,18 @@ const Utils = (function () {
 			const previousTab = tabs[previousTabIndex];
 			goToTab({ tab: previousTab });
 		} else {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.goToTab.previous(): No previous tab found. You are already on the first tab.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.goToTab.previous(): No previous tab found. You are already on the first tab."
+				);
 		}
 	};
 
-
 	/**
 	 * Saves the current form and then executes the given callback.
-	 * 
+	 *
 	 * @private
-	 * 
+	 *
 	 * @param {string|function} tabFieldNameOrCallback - The target tab fieldname or callback function.
 	 * @param {function} callback - Callback to execute after saving.
 	 */
@@ -660,7 +797,9 @@ const Utils = (function () {
 				} else if (typeof callback === "function") {
 					callback(frm, tabFieldNameOrCallback);
 				} else {
-					console.error("Utils.saveCallback(): No valid callback provided.");
+					console.error(
+						"Utils.saveCallback(): No valid callback provided."
+					);
 				}
 			});
 		} else {
@@ -669,7 +808,9 @@ const Utils = (function () {
 			} else if (typeof callback === "function") {
 				callback(frm, tabFieldNameOrCallback);
 			} else {
-				console.error("Utils.saveCallback(): No valid callback provided.");
+				console.error(
+					"Utils.saveCallback(): No valid callback provided."
+				);
 			}
 		}
 	}
@@ -713,30 +854,35 @@ const Utils = (function () {
 	 * }
 	 */
 	const hasNextTab = (props = {}) => {
-		const { debug } = props
+		const { debug } = props;
 
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasNextTab(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn("Utils.hasNextTab(): No tabs found in the form.");
 			return { hasNext: false, nextTab: null };
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasNextTab(): No active tab found.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn("Utils.hasNextTab(): No active tab found.");
 			return { hasNext: false, nextTab: null };
 		}
 		const currentTab = activeTabLink.data("fieldname");
 		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasNextTab(): Current tab not found in the list of tabs.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.hasNextTab(): Current tab not found in the list of tabs."
+				);
 			return { hasNext: false, nextTab: null };
 		}
 		const nextTabIndex = currentTabIndex + 1;
 		return {
 			hasNext: nextTabIndex < tabs.length,
-			nextTab: tabs[nextTabIndex] || null
+			nextTab: tabs[nextTabIndex] || null,
 		};
-	}
+	};
 
 	/**
 	 * Determines if the current tab has a next tab
@@ -754,30 +900,37 @@ const Utils = (function () {
 	 * }
 	 */
 	const hasPreviousTab = (props = {}) => {
-		const { debug } = props
+		const { debug } = props;
 
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasPreviousTab(): No tabs found in the form.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.hasPreviousTab(): No tabs found in the form."
+				);
 			return { hasPrevious: false, previousTab: null };
 		}
 		const activeTabLink = $("#form-tabs li a.active");
 		if (!activeTabLink.length) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasPreviousTab(): No active tab found.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn("Utils.hasPreviousTab(): No active tab found.");
 			return { hasPrevious: false, previousTab: null };
 		}
 		const currentTab = activeTabLink.data("fieldname");
 		const currentTabIndex = tabs.indexOf(currentTab);
 		if (currentTabIndex === -1) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Utils.hasPreviousTab(): Current tab not found in the list of tabs.");
+			if (debug && site.getEnvironment() === "development")
+				console.warn(
+					"Utils.hasPreviousTab(): Current tab not found in the list of tabs."
+				);
 			return { hasPrevious: false, previousTab: null };
 		}
 		const previousTabIndex = currentTabIndex - 1;
 		return {
 			hasPrevious: previousTabIndex >= 0,
-			previousTab: tabs[previousTabIndex] || null
+			previousTab: tabs[previousTabIndex] || null,
 		};
-	}
+	};
 
 	/**
 	 * Adds navigation buttons (Previous, Next, and optionally custom buttons) to each tab-pane of the current form.
@@ -846,7 +999,7 @@ const Utils = (function () {
 	 *     }
 	 *   ]
 	 * });
-	 * 
+	 *
 	 * @example
 	 * Example 5: // Add bootstrap or Custom classes to you buttons
 	 * Utils.addTabButtons({ className: 'btn btn-info special-tab-button' });
@@ -867,7 +1020,7 @@ const Utils = (function () {
 			destructive: "btn-danger",
 			success: "btn-success",
 			outline: "btn-outline",
-			ghost: "btn-ghost"
+			ghost: "btn-ghost",
 		};
 
 		const frm = cur_frm;
@@ -898,20 +1051,24 @@ const Utils = (function () {
 				const filtered = props.buttons.filter(function (btn) {
 					return (
 						btn.tab === tabFieldname &&
-						(
-							!btn.workflowStates ||
-							(Array.isArray(btn.workflowStates) && btn.workflowStates.includes(frm.doc.workflow_state))
-						) &&
-						(typeof btn.conditional !== "function" || !btn.conditional || btn.conditional(frm))
+						(!btn.workflowStates ||
+							(Array.isArray(btn.workflowStates) &&
+								btn.workflowStates.includes(
+									frm.doc.workflow_state
+								))) &&
+						(typeof btn.conditional !== "function" ||
+							!btn.conditional ||
+							btn.conditional(frm))
 					);
 				});
 				if (filtered.length) {
 					customButtonsHTML = filtered
 						.map(function (btn, index) {
 							const label = btn.label || "Submit";
-							const variantClass = btn.variant && variantMapping[btn.variant]
-								? variantMapping[btn.variant]
-								: "btn-primary";
+							const variantClass =
+								btn.variant && variantMapping[btn.variant]
+									? variantMapping[btn.variant]
+									: "btn-primary";
 							const disabledAttr = btn.disabled ? "disabled" : "";
 							return `<button class="btn ${className} ${variantClass} float-right custom-tab-button" data-tab="${tabFieldname}" data-cb-index="${index}" data-label="${label}" ${disabledAttr}>${label}</button>`;
 						})
@@ -924,8 +1081,8 @@ const Utils = (function () {
 				customButtonsHTML !== ""
 					? customButtonsHTML
 					: currentTabIndex < tabs.length - 1
-						? `<button class="btn btn-primary ${className} float-right tab-navigation" data-direction="next">Next</button>`
-						: `<button class="btn btn-primary ${className} float-right invisible" disabled>Next</button>`;
+					? `<button class="btn btn-primary ${className} float-right tab-navigation" data-direction="next">Next</button>`
+					: `<button class="btn btn-primary ${className} float-right invisible" disabled>Next</button>`;
 
 			const buttonHtml = `
 		  <div class="flex form-section-buttons justify-between nav-buttons w-100" data-tab="${tabFieldname}">
@@ -941,14 +1098,16 @@ const Utils = (function () {
 		`;
 			$(this).append(buttonHtml);
 
-			const $nav = $(this).find(`.nav-buttons[data-tab="${tabFieldname}"]`);
+			const $nav = $(this).find(
+				`.nav-buttons[data-tab="${tabFieldname}"]`
+			);
 			const prevButton = $nav.find('button[data-direction="previous"]');
 			const nextButton = $nav.find('button[data-direction="next"]');
-			const customButtons = $nav.find('button.custom-tab-button');
+			const customButtons = $nav.find("button.custom-tab-button");
 
 			buttonRefs[tabFieldname] = {
 				previous: prevButton,
-				next: nextButton
+				next: nextButton,
 			};
 
 			customButtons.each(function (index, elem) {
@@ -960,14 +1119,19 @@ const Utils = (function () {
 		// Event handler for navigation buttons (Previous/Next).
 		$(document).off("click", ".tab-navigation");
 		$(document).on("click", ".tab-navigation", function () {
-			$(this).prop('disabled', true)
+			$(this).prop("disabled", true);
 			setTimeout(() => {
-				$(this).prop('disabled', false)
+				$(this).prop("disabled", false);
 			}, 1000);
 			const direction = $(this).data("direction");
-			const currentTabFieldname = $("#form-tabs li a.active").data("fieldname");
+			const currentTabFieldname = $("#form-tabs li a.active").data(
+				"fieldname"
+			);
 			const saveTabs = props.saveTabs || [];
-			if (saveTabs.indexOf("*") !== -1 || saveTabs.indexOf(currentTabFieldname) !== -1) {
+			if (
+				saveTabs.indexOf("*") !== -1 ||
+				saveTabs.indexOf(currentTabFieldname) !== -1
+			) {
 				if (direction === "previous") {
 					Utils.goToTab.previous.save();
 				} else {
@@ -985,33 +1149,37 @@ const Utils = (function () {
 		// Event handler for custom buttons.
 		$(document).off("click", ".custom-tab-button");
 		$(document).on("click", ".custom-tab-button", function () {
-			$(this).prop('disabled', true)
+			$(this).prop("disabled", true);
 			setTimeout(() => {
-				$(this).prop('disabled', false)
+				$(this).prop("disabled", false);
 			}, 1000);
 			const tab = $(this).data("tab");
 			const cbIndex = parseInt($(this).data("cb-index"), 10);
-			const applicableButtons = (props.buttons || []).filter(function (btn) {
+			const applicableButtons = (props.buttons || []).filter(function (
+				btn
+			) {
 				return (
 					btn.tab === tab &&
-					(
-						!btn.workflowStates ||
-						(Array.isArray(btn.workflowStates) && btn.workflowStates.indexOf(frm.doc.workflow_state) !== -1)
-					) &&
-					(typeof btn.conditional !== "function" || btn.conditional(frm))
+					(!btn.workflowStates ||
+						(Array.isArray(btn.workflowStates) &&
+							btn.workflowStates.indexOf(
+								frm.doc.workflow_state
+							) !== -1)) &&
+					(typeof btn.conditional !== "function" ||
+						btn.conditional(frm))
 				);
 			});
 			const btnConfig = applicableButtons[cbIndex];
 			if (btnConfig && typeof btnConfig.callback === "function") {
 				btnConfig.callback(frm, tab);
 			} else {
-				if (props.debug && site.getEnvironment() === 'development') console.log("Custom button clicked on tab " + tab);
+				if (props.debug && site.getEnvironment() === "development")
+					console.log("Custom button clicked on tab " + tab);
 			}
 		});
 
 		return buttonRefs;
 	}
-
 
 	/**
 	 * Retrieves and returns an array of allowed workflow action names for the current form.
@@ -1032,33 +1200,36 @@ const Utils = (function () {
 	 * console.log(actions); // e.g. ["Approve", "Reject"]
 	 */
 	const getActions = (props = {}) => {
-		const { debug } = props
+		const { debug } = props;
 
-		if (debug && site.getEnvironment() === 'development') console.warn('This [getActions] method is deprecated and will be removed in version 2.0.0 Please use the [workflow.getActions] method instead. ')
+		if (debug && site.getEnvironment() === "development")
+			console.warn(
+				"This [getActions] method is deprecated and will be removed in version 2.0.0 Please use the [workflow.getActions] method instead. "
+			);
 		try {
 			// Get transitions for the current state using the helper.
 			const transitions = getWorkflowTransitions();
 			// Map the transitions to their action names.
-			return transitions.map(transition => transition.action);
+			return transitions.map((transition) => transition.action);
 		} catch (error) {
-			if (debug && site.getEnvironment() === 'development') console.warn("Error in getActions:", error);
+			if (debug && site.getEnvironment() === "development")
+				console.warn("Error in getActions:", error);
 			return [];
 		}
 	};
 
-
 	/**
 	 * Provides workflow action interception utilities for Frappe applications.
-	 * 
+	 *
 	 * This object contains methods to intercept workflow actions with different behaviors:
 	 * - confirm: Shows a confirmation dialog before allowing the action
 	 */
 	const action = {
 		/**
 		 * Intercepts a workflow action with a confirmation dialog.
-		 * 
+		 *
 		 * @namespace Utils.action
-		 * 
+		 *
 		 * @param {Object} props - Configuration options
 		 * @param {string} props.action - The workflow action name to intercept
 		 * @param {string} [props.message] - Custom confirmation message (defaults to "Are you sure you want to [action]?")
@@ -1066,7 +1237,7 @@ const Utils = (function () {
 		 * @param {Object} [props.updateField] - Field to update on confirmation
 		 * @param {string} props.updateField.field - Field name to update
 		 * @param {*} props.updateField.value - New value to set
-		 * 
+		 *
 		 * @example
 		 * // Intercept "Submit" action with confirmation dialog and update a counter
 		 * Utils.action.confirm({
@@ -1083,36 +1254,61 @@ const Utils = (function () {
 			const { action, message, debug, updateField } = props;
 
 			if (!action) {
-				if (debug && site.getEnvironment() === 'development') {
+				if (debug && site.getEnvironment() === "development") {
 					console.warn("Utils.action.confirm(): No action provided.");
 				}
 				return;
 			}
 
 			if (frappe[`__${toCamelCase(action)}Confirm`]) return;
-			frappe[`__${toCamelCase(action)}Confirm`] = true
+			frappe[`__${toCamelCase(action)}Confirm`] = true;
 
 			frappe.ui.form.on(cur_frm.doc.doctype, {
 				before_workflow_action: async () => {
 					if (cur_frm.selected_workflow_action !== action) return;
-					if (debug && site.getEnvironment() === 'development') console.log(`Intercepting Workflow Action: ${action}`);
+					if (debug && site.getEnvironment() === "development")
+						console.log(`Intercepting Workflow Action: ${action}`);
 					frappe.dom.unfreeze();
 
 					let promise = new Promise((resolve, reject) => {
 						frappe.confirm(
 							message || `Are you sure you want to ${action}?`,
 							() => {
-								if (updateField && updateField.field && updateField.value !== undefined) {
-									frappe.db.set_value(cur_frm.doctype, cur_frm.docname, updateField.field, updateField.value)
-										.then(response => {
-											if (debug && site.getEnvironment() === 'development') {
-												console.debug(`Field ${updateField.field} updated successfully`, response);
+								if (
+									updateField &&
+									updateField.field &&
+									updateField.value !== undefined
+								) {
+									frappe.db
+										.set_value(
+											cur_frm.doctype,
+											cur_frm.docname,
+											updateField.field,
+											updateField.value
+										)
+										.then((response) => {
+											if (
+												debug &&
+												site.getEnvironment() ===
+													"development"
+											) {
+												console.debug(
+													`Field ${updateField.field} updated successfully`,
+													response
+												);
 											}
 											resolve();
 										})
-										.catch(error => {
-											if (debug && site.getEnvironment() === 'development') {
-												console.error(`Error updating field ${updateField.field}`, error);
+										.catch((error) => {
+											if (
+												debug &&
+												site.getEnvironment() ===
+													"development"
+											) {
+												console.error(
+													`Error updating field ${updateField.field}`,
+													error
+												);
 											}
 											reject();
 										});
@@ -1121,31 +1317,34 @@ const Utils = (function () {
 								}
 							},
 							() => {
-								if (debug && site.getEnvironment() === 'development') {
-									console.debug(`Utils.action.confirm(): Cancelled action "${action}"`);
+								if (
+									debug &&
+									site.getEnvironment() === "development"
+								) {
+									console.debug(
+										`Utils.action.confirm(): Cancelled action "${action}"`
+									);
 								}
 								reject();
 							}
 						);
-
-
 					});
 
 					await promise.catch(() => {
 						throw new Error("Workflow action cancelled.");
 					});
-				}
+				},
 			});
 		},
 	};
 
 	/**
 	 * Get possible workflow transitions from the current state for the loaded document
-	 * 
+	 *
 	 * @deprecated This method is deprecated in favor of {@link workflow.getTransitions} method.
-	 * 
+	 *
 	 * @function
-	 * 
+	 *
 	 * @returns {Array.<Object>} Array of transition objects. Each object has the following properties:
 	 *   - action {string} The name of the workflow action.
 	 *   - next_state {string} The state the workflow will transition to if the action is executed.
@@ -1160,7 +1359,9 @@ const Utils = (function () {
 	 * });
 	 */
 	function getWorkflowTransitions() {
-		console.warn('This [getWorkflowTransitions] method is deprecated and will be removed in version 2.0.0 Please use the [workflow.getTransitions] method instead. ')
+		console.warn(
+			"This [getWorkflowTransitions] method is deprecated and will be removed in version 2.0.0 Please use the [workflow.getTransitions] method instead. "
+		);
 		try {
 			if (!cur_frm || !cur_frm.doc || !cur_frm.doc.doctype) {
 				console.warn("Invalid form or missing DocType");
@@ -1183,8 +1384,13 @@ const Utils = (function () {
 				transitions = cur_frm.workflow.transitions;
 			}
 			// Then check frappe.workflow.workflows
-			else if (frappe.workflow && frappe.workflow.workflows && frappe.workflow.workflows[doctype]) {
-				transitions = frappe.workflow.workflows[doctype].transitions || [];
+			else if (
+				frappe.workflow &&
+				frappe.workflow.workflows &&
+				frappe.workflow.workflows[doctype]
+			) {
+				transitions =
+					frappe.workflow.workflows[doctype].transitions || [];
 			}
 
 			if (transitions.length === 0) {
@@ -1193,16 +1399,18 @@ const Utils = (function () {
 			}
 
 			// Filter transitions for current state only
-			const currentStateTransitions = transitions.filter(t => t.state === workflow_state);
+			const currentStateTransitions = transitions.filter(
+				(t) => t.state === workflow_state
+			);
 
 			// Format the results with transition details and allowed roles
-			return currentStateTransitions.map(transition => {
+			return currentStateTransitions.map((transition) => {
 				return {
 					action: transition.action || "",
 					next_state: transition.next_state || "",
 					allowed_roles: formatAllowedRoles(transition.allowed),
 					condition: transition.condition || "",
-					state: transition.state || ""
+					state: transition.state || "",
 				};
 			});
 		} catch (error) {
@@ -1213,9 +1421,9 @@ const Utils = (function () {
 
 	/**
 	 * Get all workflow transitions defined for a DocType
-	 * 
+	 *
 	 * @deprecated This method is deprecated in favor of {@link workflow.getAllTransitions} method.
-	 * 
+	 *
 	 * @function
 	 * @returns {Array.<Object>} Array of transition objects. Each object has the following properties:
 	 *   - action {string} The name of the workflow action.
@@ -1231,7 +1439,9 @@ const Utils = (function () {
 	 * });
 	 */
 	function getAllWorkflowTransitions() {
-		console.warn('This [getAllWorkflowTransitions] method is deprecated and will be removed in version 2.0.0 Please use the [workflow.getAllTransitions] method instead. ')
+		console.warn(
+			"This [getAllWorkflowTransitions] method is deprecated and will be removed in version 2.0.0 Please use the [workflow.getAllTransitions] method instead. "
+		);
 		try {
 			if (!cur_frm || !cur_frm.doc || !cur_frm.doc.doctype) {
 				console.warn("Invalid form or missing DocType");
@@ -1248,8 +1458,13 @@ const Utils = (function () {
 				transitions = cur_frm.workflow.transitions;
 			}
 			// Then check frappe.workflow.workflows
-			else if (frappe.workflow && frappe.workflow.workflows && frappe.workflow.workflows[doctype]) {
-				transitions = frappe.workflow.workflows[doctype].transitions || [];
+			else if (
+				frappe.workflow &&
+				frappe.workflow.workflows &&
+				frappe.workflow.workflows[doctype]
+			) {
+				transitions =
+					frappe.workflow.workflows[doctype].transitions || [];
 			}
 
 			if (transitions.length === 0) {
@@ -1258,13 +1473,13 @@ const Utils = (function () {
 			}
 
 			// Format the results with transition details and allowed roles
-			return transitions.map(transition => {
+			return transitions.map((transition) => {
 				return {
 					action: transition.action || "",
 					next_state: transition.next_state || "",
 					state: transition.state || "",
 					allowed_roles: formatAllowedRoles(transition.allowed),
-					condition: transition.condition || ""
+					condition: transition.condition || "",
 				};
 			});
 		} catch (error) {
@@ -1275,9 +1490,9 @@ const Utils = (function () {
 
 	/**
 	 * Provides workflow information for the current form.
-	 * 
+	 *
 	 * @namespace Utils.site
-	 * 
+	 *
 	 */
 	const workflow = {
 		/**
@@ -1330,14 +1545,27 @@ const Utils = (function () {
 					console.warn(`No workflow state found for ${doctype}`);
 					return [];
 				}
-				const transitions = cur_frm.workflow?.transitions || frappe.workflow?.workflows?.[doctype]?.transitions || [];
-				return transitions.filter(({ state }) => state === workflow_state).map(({ action = "", next_state = "", allowed, condition = "", state = "" }) => ({
-					action,
-					next_state,
-					allowed_roles: formatAllowedRoles(allowed),
-					condition,
-					state
-				}));
+				const transitions =
+					cur_frm.workflow?.transitions ||
+					frappe.workflow?.workflows?.[doctype]?.transitions ||
+					[];
+				return transitions
+					.filter(({ state }) => state === workflow_state)
+					.map(
+						({
+							action = "",
+							next_state = "",
+							allowed,
+							condition = "",
+							state = "",
+						}) => ({
+							action,
+							next_state,
+							allowed_roles: formatAllowedRoles(allowed),
+							condition,
+							state,
+						})
+					);
 			} catch (error) {
 				console.warn("Error in workflow.getTransitions:", error);
 				return [];
@@ -1366,14 +1594,25 @@ const Utils = (function () {
 					return [];
 				}
 				const { doctype } = cur_frm.doc;
-				const transitions = cur_frm.workflow?.transitions || frappe.workflow?.workflows?.[doctype]?.transitions || [];
-				return transitions.map(({ action = "", next_state = "", state = "", allowed, condition = "" }) => ({
-					action,
-					next_state,
-					state,
-					allowed_roles: formatAllowedRoles(allowed),
-					condition
-				}));
+				const transitions =
+					cur_frm.workflow?.transitions ||
+					frappe.workflow?.workflows?.[doctype]?.transitions ||
+					[];
+				return transitions.map(
+					({
+						action = "",
+						next_state = "",
+						state = "",
+						allowed,
+						condition = "",
+					}) => ({
+						action,
+						next_state,
+						state,
+						allowed_roles: formatAllowedRoles(allowed),
+						condition,
+					})
+				);
 			} catch (error) {
 				console.warn("Error in workflow.getAllTransitions:", error);
 				return [];
@@ -1407,7 +1646,9 @@ const Utils = (function () {
 		getFutureTransitions: ({ state } = {}) => {
 			try {
 				if (!cur_frm || !cur_frm.doc || !cur_frm.doc.doctype) {
-					console.warn("Utils.getFutureWorkflowTransitions(): Invalid form or missing DocType");
+					console.warn(
+						"Utils.getFutureWorkflowTransitions(): Invalid form or missing DocType"
+					);
 					return [];
 				}
 
@@ -1423,17 +1664,24 @@ const Utils = (function () {
 				let transitions = [];
 				if (cur_frm.workflow && cur_frm.workflow.transitions) {
 					transitions = cur_frm.workflow.transitions;
-				} else if (frappe.workflow && frappe.workflow.workflows && frappe.workflow.workflows[doctype]) {
-					transitions = frappe.workflow.workflows[doctype].transitions || [];
+				} else if (
+					frappe.workflow &&
+					frappe.workflow.workflows &&
+					frappe.workflow.workflows[doctype]
+				) {
+					transitions =
+						frappe.workflow.workflows[doctype].transitions || [];
 				}
 				if (transitions.length === 0) {
-					console.warn(`No workflow transitions found for ${doctype}`);
+					console.warn(
+						`No workflow transitions found for ${doctype}`
+					);
 					return [];
 				}
 
 				// Build a transition map
 				const transitionMap = {};
-				transitions.forEach(transition => {
+				transitions.forEach((transition) => {
 					if (!transitionMap[transition.state]) {
 						transitionMap[transition.state] = [];
 					}
@@ -1444,14 +1692,22 @@ const Utils = (function () {
 				const futureTransitions = [];
 				const collectTransitions = (state) => {
 					if (!transitionMap[state]) return;
-					transitionMap[state].forEach(transition => {
-						if (!futureTransitions.some(t => t.action === transition.action && t.state === transition.state)) {
+					transitionMap[state].forEach((transition) => {
+						if (
+							!futureTransitions.some(
+								(t) =>
+									t.action === transition.action &&
+									t.state === transition.state
+							)
+						) {
 							futureTransitions.push({
 								action: transition.action || "",
 								next_state: transition.next_state || "",
 								state: transition.state || "",
-								allowed_roles: formatAllowedRoles(transition.allowed),
-								condition: transition.condition || ""
+								allowed_roles: formatAllowedRoles(
+									transition.allowed
+								),
+								condition: transition.condition || "",
 							});
 							collectTransitions(transition.next_state);
 						}
@@ -1465,7 +1721,7 @@ const Utils = (function () {
 				console.warn("Error in getFutureWorkflowTransitions:", error);
 				return [];
 			}
-		}
+		},
 	};
 
 	/**
@@ -1483,7 +1739,11 @@ const Utils = (function () {
 		 * console.log(apps); // e.g. [ { name: "ERPNext", version: "v13.0.1" }, ... ]
 		 */
 		apps: () => {
-			if (typeof frappe !== 'undefined' && frappe.boot && frappe.boot.versions) {
+			if (
+				typeof frappe !== "undefined" &&
+				frappe.boot &&
+				frappe.boot.versions
+			) {
 				return frappe.boot.versions;
 			}
 			return [];
@@ -1494,7 +1754,7 @@ const Utils = (function () {
 		 * This function checks if Frappe's boot information is available to determine
 		 * if the application is running in development mode (using the developer_mode flag).
 		 * If that is not available, it falls back to checking the window's hostname for common
-		 * development hosts such as "localhost" or "127.0.0.1". If neither method provides a 
+		 * development hosts such as "localhost" or "127.0.0.1". If neither method provides a
 		 * definitive answer, it defaults to "production".
 		 *
 		 * @returns {string} Returns "development" if in a development environment, otherwise "production".
@@ -1506,18 +1766,30 @@ const Utils = (function () {
 		 */
 		getEnvironment: () => {
 			// If Frappe boot is available, use its developer_mode flag.
-			if (typeof frappe !== 'undefined' && frappe.boot && typeof frappe.boot.developer_mode !== 'undefined') {
-				return frappe.boot.developer_mode ? 'development' : 'production';
+			if (
+				typeof frappe !== "undefined" &&
+				frappe.boot &&
+				typeof frappe.boot.developer_mode !== "undefined"
+			) {
+				return frappe.boot.developer_mode
+					? "development"
+					: "production";
 			}
 
-			if (typeof window !== 'undefined' && window.location && window.location.hostname) {
-				const devHosts = ['localhost', '127.0.0.1'];
-				return devHosts.includes(window.location.hostname) ? 'development' : 'production';
+			if (
+				typeof window !== "undefined" &&
+				window.location &&
+				window.location.hostname
+			) {
+				const devHosts = ["localhost", "127.0.0.1"];
+				return devHosts.includes(window.location.hostname)
+					? "development"
+					: "production";
 			}
 
-			return 'production';
-		}
-	}
+			return "production";
+		},
+	};
 
 	// Expose public API methods.
 	return {
@@ -1535,13 +1807,12 @@ const Utils = (function () {
 		hasPreviousTab: hasPreviousTab,
 		action: action,
 		workflow: workflow,
-		site: site
+		site: site,
 	};
 })();
 
-
 // compliance with frappe best practice
 (() => {
-	frappe.provide('frappe.utilsPlus');
-	frappe.utilsPlus = Utils
+	frappe.provide("frappe.utilsPlus");
+	frappe.utilsPlus = Utils;
 })();
