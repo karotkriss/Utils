@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0] - 2025-07-27
+
+### Added
+- **`action.composeEmail` Action Interceptor:**
+  - Introduced a new `action.composeEmail` function to intercept a workflow action and require the user to send an email via the `CommunicationComposer` before the action proceeds.
+  - Includes a `setValue` property to update multiple document fields after the user initiates the send action but before the workflow proceeds.
+
 ## [2.2.2] - 2025-04-29
 
 ### Changed
