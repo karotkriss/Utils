@@ -338,6 +338,34 @@ frappe.utilsPlus.action.confirm({
 });
 
 ```
+
+#### Compose Email
+
+This feature intercepts a workflow action, enabling the user to compose and send an email before proceeding with the action.
+
+```javascript
+frappe.ui.form.on("Leave Application", {
+    refresh: function(frm) {
+        frappe.utilsPlus.action.composeEmail({
+            action: "Reject",
+            debug: true,
+            composer_args: {
+                recipients: frm.doc.owner,
+                subject: `Update on your Leave Application: ${frm.doc.name}`,
+                message: `Hello,<br><br>
+                          We are unable to approve your leave application for the following reason(s):
+                          <br><br>
+                          <ul>
+                            <li>...</li>
+                          </ul>
+                          <br>
+                          Thank you.`
+            }
+        });
+    }
+});
+```
+
 ### Workflow Transition and Action Retrieval
 
 #### Retrieve all workflow transition
