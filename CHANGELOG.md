@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.1] - 2025-08-28
+
+### Fixed
+- **Tab Navigation:**
+  - ***Active tab detection**: In preparation for version 16 [Frappe Framework](https://github.com/frappe/frappe) has changed the tab links from links to button (`#form-tabs li a` -> `#form-tabs li button`) this broke my active tab detection because I was doing a jquery for `#form-tabs li a.active`. I will decouple the active tab detection from the ui eventually but for now I have hotfixed it `#form-tabs li a.active` -> `#form-tabs li .active`.
+
 ## [2.4.0] - 2025-07-27
 
 ### Added
