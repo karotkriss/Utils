@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 2.4.0
+ * @version 2.4.1
  *
  * @module Utils
  */
@@ -739,7 +739,7 @@ const Utils = (function () {
 				);
 			return;
 		}
-		const activeTabLink = $("#form-tabs li a.active");
+		const activeTabLink = $("#form-tabs li .active");
 		if (!activeTabLink.length) {
 			if (debug && site.getEnvironment() === "development")
 				console.warn("Utils.goToTab.next(): No active tab found.");
@@ -788,7 +788,7 @@ const Utils = (function () {
 				);
 			return;
 		}
-		const activeTabLink = $("#form-tabs li a.active");
+		const activeTabLink = $("#form-tabs li .active");
 		if (!activeTabLink.length) {
 			if (debug && site.getEnvironment() === "development")
 				console.warn("Utils.goToTab.previous(): No active tab found.");
@@ -897,7 +897,7 @@ const Utils = (function () {
 				console.warn("Utils.hasNextTab(): No tabs found in the form.");
 			return { hasNext: false, nextTab: null };
 		}
-		const activeTabLink = $("#form-tabs li a.active");
+		const activeTabLink = $("#form-tabs li .active");
 		if (!activeTabLink.length) {
 			if (debug && site.getEnvironment() === "development")
 				console.warn("Utils.hasNextTab(): No active tab found.");
@@ -945,7 +945,7 @@ const Utils = (function () {
 				);
 			return { hasPrevious: false, previousTab: null };
 		}
-		const activeTabLink = $("#form-tabs li a.active");
+		const activeTabLink = $("#form-tabs li .active");
 		if (!activeTabLink.length) {
 			if (debug && site.getEnvironment() === "development")
 				console.warn("Utils.hasPreviousTab(): No active tab found.");
@@ -1159,7 +1159,7 @@ const Utils = (function () {
 				$(this).prop("disabled", false);
 			}, 1000);
 			const direction = $(this).data("direction");
-			const currentTabFieldname = $("#form-tabs li a.active").data(
+			const currentTabFieldname = $("#form-tabs li .active").data(
 				"fieldname"
 			);
 			const saveTabs = props.saveTabs || [];

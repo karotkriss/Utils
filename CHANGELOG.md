@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.1] - 2025-08-28
+
+### Fixed
+- **Tab Navigation**
+  - **Active tab detection**: In Frappe Framework v16, tab controls changed from anchors to buttons (`#form-tabs li a` → `#form-tabs li button`). This broke active-tab detection that relied on `#form-tabs li a.active`. As a hotfix, the selector is broadened to `#form-tabs li .active`. A future release will decouple active-tab detection from the UI.
+
 ## [2.4.0] - 2025-07-27
 
 ### Added
