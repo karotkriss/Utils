@@ -31,6 +31,7 @@
 	- [Action Interception](#action-interception)
 	- [Workflow and Transition Definitions](#workflow-transition-and-action-retrieval)
 	- [Site Information](#site-information)
+	- [Field Change Observers](#field-change-observers)
 - [Contributing](#contributing)
 
 ---
@@ -57,8 +58,9 @@ This module is especially useful in custom Frappe apps, helping you build dynami
 - **Read-Only and Hidden Controls:** Set fields as read-only or hide them based on workflow state.
 - **Form Navigation:** Scroll to specific tabs or navigate between them with built-in methods.
 - **Custom Tab Buttons:** Automatically add navigation buttons (Previous/Next or custom) to each tab pane.
-- **Helper Methods:** Determine if there’s a next or previous tab.
+- **Helper Methods:** Determine if there's a next or previous tab.
 - **Action Interception:** Intercept workflow actions allowing you to prompt users.
+- **Field Observers:** Monitor field changes and execute callbacks reactively.
 
 ---
 
@@ -469,6 +471,91 @@ Logs the current environment ("development" or "production")
 ```javascript
 console.log(`Current Environment: ${frappe.utilsPlus.site.getEnvironment()}`);
 ```
+
+### Field Change Observers
+
+#### Watch Field Changes
+
+Monitor multiple fields and execute a callback when any of them change. Returns watcher objects for precise control.
+
+```javascript
+// Watch customer and item fields for changes
+const watchers = frappe.utilsPlus.observer.watch({
+  fields: ['customer', 'item_code'],
+  callback: (value, frm) => {
+    console.log(`Field changed to: ${value}`);
+    frm.refresh_field('custom_status_indicator');
+  },
+  debug: true
+});
+
+// Save watcher IDs for later use
+const customerWatcherId = watchers.customer.id;
+```
+
+#### Advanced Observer Usage
+
+```javascript
+// Multiple independent watchers on the same field
+const priceWatcher = frappe.utilsPlus.observer.watch({
+  fields: ['rate'],
+  callback: (value, frm) => {
+    if (value > 1000) {
+      frappe.msgprint('High value item detected!');
+    }
+  }
+});
+
+const discountWatcher = frappe.utilsPlus.observer.watch({
+  fields: ['rate'],
+  callback: (value, frm) => {
+    // Apply automatic discount logic
+    if (value > 5000) {
+      frm.set_value('discount_percentage', 10);
+    }
+  }
+});
+```
+
+#### Stop Watching Fields
+
+```javascript
+// Stop specific watcher by ID
+frappe.utilsPlus.observer.unwatch({
+  fields: ['customer'],
+  id: customerWatcherId,
+  debug: true
+});
+
+// Stop ALL watchers on a field
+frappe.utilsPlus.observer.unwatch({
+  fields: ['item_code'],
+  debug: true
+});
+
+// Or use the returned unwatch method
+watchers.customer.unwatch();
+```
+
+#### Conditional Field Watching
+
+```javascript
+// Watch fields based on conditions
+frappe.ui.form.on("Sales Order", {
+  refresh: function(frm) {
+    if (frm.doc.workflow_state === 'Draft') {
+      frappe.utilsPlus.observer.watch({
+        fields: ['customer', 'delivery_date'],
+        callback: (value, frm) => {
+          // Validate data as user types
+          frm.trigger('validate_draft_fields');
+        }
+      });
+    }
+  }
+});
+```
+
 ---
 
 ## Contributing
