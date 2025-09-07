@@ -2012,30 +2012,30 @@ const Utils = (function () {
 		watch: (props = {}) => {
 			const { fields, callback, debug = false } = props;
 
-			const isDevelopement = site.getEnvironment() == "development";
+			const isDevelopment = site.getEnvironment() == "development";
 			let { cur_frm: frm } = window;
 
 			if (!frm) {
-				if (debug && isDevelopement)
+				if (debug && isDevelopment)
 					console.warn("Utils.observer.watch: `cur_frm` not found.");
 				return null;
 			}
 			if (!fields) {
-				if (debug && isDevelopement)
+				if (debug && isDevelopment)
 					console.warn(
 						"Utils.observer.watch: No `fields` property provided."
 					);
 				return null;
 			}
 			if (!Array.isArray(fields)) {
-				if (debug && isDevelopement)
+				if (debug && isDevelopment)
 					console.warn(
 						"Utils.observer.watch: `fields` property must be an <Array>."
 					);
 				return null;
 			}
 			if (typeof callback !== "function") {
-				if (debug && isDevelopement)
+				if (debug && isDevelopment)
 					console.warn(
 						"Utils.observer.watch: No valid `callback` property provided, `callback` must be a <function>."
 					);
@@ -2046,7 +2046,7 @@ const Utils = (function () {
 
 			for (let field of fields) {
 				if (!field || typeof field !== "string") {
-					if (debug && isDevelopement)
+					if (debug && isDevelopment)
 						console.warn(
 							`Utils.observer.watch: Field ${field} must be a <String>.`
 						);
@@ -2072,7 +2072,7 @@ const Utils = (function () {
 				frappe.ui.form.on(frm.doctype, field, handler);
 				frm[flagName] = true;
 
-				if (debug && isDevelopement) {
+				if (debug && isDevelopment) {
 					console.debug(
 						`Utils.observer.watch: Successfully initialized observer for field '${field}' with ID '${ID}'.`
 					);
@@ -2121,25 +2121,25 @@ const Utils = (function () {
 		unwatch: (props = {}) => {
 			const { fields, id, debug = false } = props;
 
-			const isDevelopement = site.getEnvironment() == "development";
+			const isDevelopment = site.getEnvironment() == "development";
 			let { cur_frm: frm } = window;
 
 			if (!frm) {
-				if (debug && isDevelopement)
+				if (debug && isDevelopment)
 					console.warn(
 						"Utils.observer.unwatch: `cur_frm` not found."
 					);
 				return;
 			}
 			if (!fields) {
-				if (debug && isDevelopement)
+				if (debug && isDevelopment)
 					console.warn(
 						"Utils.observer.unwatch: No `fields` property provided."
 					);
 				return;
 			}
 			if (!Array.isArray(fields)) {
-				if (debug && isDevelopement)
+				if (debug && isDevelopment)
 					console.warn(
 						"Utils.observer.unwatch: `fields` property must be an <Array>."
 					);
@@ -2148,7 +2148,7 @@ const Utils = (function () {
 
 			for (let field of fields) {
 				if (!field || typeof field !== "string") {
-					if (debug && isDevelopement)
+					if (debug && isDevelopment)
 						console.warn(
 							`Utils.observer.unwatch: Field ${field} must be a <String>.`
 						);
@@ -2166,13 +2166,13 @@ const Utils = (function () {
 					const flagName = `__observer_${field}_${id}`;
 					if (frm[flagName] !== undefined) {
 						frm[flagName] = false;
-						if (debug && isDevelopement) {
+						if (debug && isDevelopment) {
 							console.debug(
 								`Utils.observer.unwatch: Disabled specific watcher with ID '${id}' for field '${field}'.`
 							);
 						}
 					} else {
-						if (debug && isDevelopement) {
+						if (debug && isDevelopment) {
 							console.warn(
 								`Utils.observer.unwatch: No watcher with ID '${id}' found for field '${field}'.`
 							);
@@ -2185,7 +2185,7 @@ const Utils = (function () {
 					);
 
 					if (!observerFlags.length) {
-						if (debug && isDevelopement) {
+						if (debug && isDevelopment) {
 							console.warn(
 								`Utils.observer.unwatch: No observers for '${field}' available.`
 							);
@@ -2197,7 +2197,7 @@ const Utils = (function () {
 						frm[observerFlag] = false;
 					});
 
-					if (debug && isDevelopement) {
+					if (debug && isDevelopment) {
 						console.debug(
 							`Utils.observer.unwatch: Disabled all ${observerFlags.length} observers for field '${field}'.`
 						);
