@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 2.4.1
+ * @version 2.5.0
  *
  * @module Utils
  */
@@ -126,6 +126,24 @@ const Utils = (function () {
 
 		return camelCase;
 	};
+
+	/**
+	 * Generates a simple, random alphanumeric string of a fixed length.
+	 *
+	 * @private
+	 *
+	 * @param {number} [length=8] The desired length of the final string.
+	 * @returns {string} The generated random string.
+	 */
+	function generateRandomString(length = 8) {
+		let result = "";
+		while (result.length < length) {
+			// Append a random string (e.g., "76p79csx1") and continue until long enough
+			result += Math.random().toString(36).substring(2);
+		}
+		// Truncate to the exact desired length
+		return result.substring(0, length);
+	}
 
 	/**
 	 * Retrieves all "Tab Break" fields from the global form (cur_frm) and returns an object containing:
@@ -1947,6 +1965,247 @@ const Utils = (function () {
 		},
 	};
 
+	/**
+	 * A utility for observing field changes on Frappe Framework forms.
+	 *
+	 * It simplifies the process of watching multiple fields and executing a single callback,
+	 * providing a clean and robust way to manage and remove these listeners.
+	 *
+	 * Key features include the ability to add multiple independent watchers to the same field
+	 * and to remove watchers precisely by ID or broadly by field name.
+	 *
+	 * @namespace Utils.observer
+	 */
+	const observer = {
+		/**
+		 * Initializes one or more observers on form fields. When any of the specified
+		 * fields change, the provided callback function is executed.
+		 *
+		 * @param {object} [props={}] - The configuration object for the watcher.
+		 * @param {string[]} props.fields - An array of field names to watch (e.g., ['customer', 'item_code']).
+		 * @param {function(any, object)} props.callback - The function to execute when a field changes.
+		 * It receives the field's new value as the first argument and the `frm` object as the second.
+		 * @param {boolean} [props.debug=false] - If true, enables detailed console logging for this operation.
+		 *
+		 * @returns {Object.<string, {unwatch: function(), id: string}> | null} An object where keys are the
+		 * field names. Each value is an object containing a specific `unwatch()` method for that listener
+		 * and the watcher's unique `id`. Returns `null` if setup fails (e.g., `cur_frm` not found).
+		 *
+		 * @example
+		 * // Watch 'customer' and 'company' fields.
+		 * const myWatchers = Utils.observer.watch({
+		 *   fields: ['customer', 'company'],
+		 *   callback: (value, frm) => {
+		 *     console.log(`A field was updated! New value: ${value}`);
+		 *     // Do something useful, like refresh a dependent field.
+		 *     frm.refresh_field('custom_status_indicator');
+		 *   },
+		 *   debug: true
+		 * });
+		 *
+		 * // To be used later for precise unwatching.
+		 * const customerWatcherId = myWatchers.customer.id;
+		 *
+		 * // To stop watching the 'company' field from this specific watcher:
+		 * myWatchers.company.unwatch();
+		 */
+		watch: (props = {}) => {
+			const { fields, callback, debug = false } = props;
+
+			const isDevelopment = site.getEnvironment() == "development";
+			let { cur_frm: frm } = window;
+
+			if (!frm) {
+				if (debug && isDevelopment)
+					console.warn("Utils.observer.watch: `cur_frm` not found.");
+				return null;
+			}
+			if (!fields) {
+				if (debug && isDevelopment)
+					console.warn(
+						"Utils.observer.watch: No `fields` property provided."
+					);
+				return null;
+			}
+			if (!Array.isArray(fields)) {
+				if (debug && isDevelopment)
+					console.warn(
+						"Utils.observer.watch: `fields` property must be an <Array>."
+					);
+				return null;
+			}
+			if (typeof callback !== "function") {
+				if (debug && isDevelopment)
+					console.warn(
+						"Utils.observer.watch: No valid `callback` property provided, `callback` must be a <function>."
+					);
+				return null;
+			}
+
+			const watchers = {};
+
+			for (let field of fields) {
+				if (!field || typeof field !== "string") {
+					if (debug && isDevelopment)
+						console.warn(
+							`Utils.observer.watch: Field ${field} must be a <String>.`
+						);
+					continue;
+				}
+				if (!frm.fields_dict[field]) {
+					console.warn(
+						`Utils.observer.watch: Field '${field}' not found in form.`
+					);
+					continue;
+				}
+
+				let ID = generateRandomString(6);
+				const flagName = `__observer_${field}_${ID}`;
+
+				const handler = () => {
+					if (!frm[flagName]) {
+						return null;
+					}
+					callback(frm.doc[field], frm);
+				};
+
+				frappe.ui.form.on(frm.doctype, field, handler);
+				frm[flagName] = true;
+
+				if (debug && isDevelopment) {
+					console.debug(
+						`Utils.observer.watch: Successfully initialized observer for field '${field}' with ID '${ID}'.`
+					);
+				}
+
+				watchers[field] = {
+					unwatch: () => {
+						frm[flagName] = false;
+					},
+					id: ID,
+				};
+			}
+
+			return watchers;
+		},
+
+		/**
+		 * Disables one or all observers on specified form fields.
+		 * This method can operate in two modes:
+		 * 1.  **Precise Mode:** If an `id` is provided, it disables only that specific watcher.
+		 * 2.  **Broad Mode:** If no `id` is provided, it disables ALL active watchers on that field.
+		 *
+		 * @param {object} [props={}] - The configuration object for the unwatch operation.
+		 * @param {string[]} props.fields - An array of field names to unwatch.
+		 * @param {string} [props.id] - Optional. If provided, disables only the watcher with this specific ID.
+		 * @param {boolean} [props.debug=false] - If true, enables detailed console logging for this operation.
+		 * @returns {void}
+		 *
+		 * @example
+		 * // ---- PRECISE UNWATCH (by ID) ----
+		 * // Assuming 'customerWatcherId' was saved from a previous watch() call.
+		 * Utils.observer.unwatch({
+		 *   fields: ['customer'],
+		 *   id: customerWatcherId,
+		 *   debug: true
+		 * });
+		 *
+		 * @example
+		 * // ---- BROAD UNWATCH (all on field) ----
+		 * // This will disable ALL watchers on the 'item_code' field, regardless of their ID.
+		 * Utils.observer.unwatch({
+		 *   fields: ['item_code'],
+		 *   debug: true
+		 * });
+		 */
+		unwatch: (props = {}) => {
+			const { fields, id, debug = false } = props;
+
+			const isDevelopment = site.getEnvironment() == "development";
+			let { cur_frm: frm } = window;
+
+			if (!frm) {
+				if (debug && isDevelopment)
+					console.warn(
+						"Utils.observer.unwatch: `cur_frm` not found."
+					);
+				return;
+			}
+			if (!fields) {
+				if (debug && isDevelopment)
+					console.warn(
+						"Utils.observer.unwatch: No `fields` property provided."
+					);
+				return;
+			}
+			if (!Array.isArray(fields)) {
+				if (debug && isDevelopment)
+					console.warn(
+						"Utils.observer.unwatch: `fields` property must be an <Array>."
+					);
+				return;
+			}
+
+			for (let field of fields) {
+				if (!field || typeof field !== "string") {
+					if (debug && isDevelopment)
+						console.warn(
+							`Utils.observer.unwatch: Field ${field} must be a <String>.`
+						);
+					continue;
+				}
+				if (!frm.fields_dict[field]) {
+					console.warn(
+						`Utils.observer.unwatch: Field '${field}' not found in form.`
+					);
+					continue;
+				}
+
+				if (id) {
+					// Precise Mode: Disable by ID
+					const flagName = `__observer_${field}_${id}`;
+					if (frm[flagName] !== undefined) {
+						frm[flagName] = false;
+						if (debug && isDevelopment) {
+							console.debug(
+								`Utils.observer.unwatch: Disabled specific watcher with ID '${id}' for field '${field}'.`
+							);
+						}
+					} else {
+						if (debug && isDevelopment) {
+							console.warn(
+								`Utils.observer.unwatch: No watcher with ID '${id}' found for field '${field}'.`
+							);
+						}
+					}
+				} else {
+					// Broad Mode: Disable all for the field
+					const observerFlags = Object.keys(frm).filter((key) =>
+						key.startsWith(`__observer_${field}_`)
+					);
+
+					if (!observerFlags.length) {
+						if (debug && isDevelopment) {
+							console.warn(
+								`Utils.observer.unwatch: No observers for '${field}' available.`
+							);
+						}
+						continue;
+					}
+
+					observerFlags.forEach((observerFlag) => {
+						frm[observerFlag] = false;
+					});
+
+					if (debug && isDevelopment) {
+						console.debug(
+							`Utils.observer.unwatch: Disabled all ${observerFlags.length} observers for field '${field}'.`
+						);
+					}
+				}
+			}
+		},
+	};
 	// Expose public API methods.
 	return {
 		getTabs: getTabs,
@@ -1964,6 +2223,7 @@ const Utils = (function () {
 		action: action,
 		workflow: workflow,
 		site: site,
+		observer: observer,
 	};
 })();
 

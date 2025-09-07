@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.5.0] - 2025-09-01
+
+### Added
+- **Field Change Observers**
+  - **`observer.watch`**: Monitor multiple fields and execute callbacks reactively when any of them change. Returns watcher objects for precise control and supports multiple independent watchers on the same field.
+  - **`observer.unwatch`**: Disable observers with precise ID-based control or broad field-based removal. Supports stopping specific watchers by ID or all watchers on a field.
+  - **Advanced Observer Features**: Debug logging, conditional watching, and decent error handling for production environments.
+
 ## [2.4.1] - 2025-08-28
 
 ### Fixed
