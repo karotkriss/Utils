@@ -300,6 +300,22 @@ frappe.utilsPlus.addTabButtons({
 
 ```
 
+#### Override Default Navigation
+
+```javascript
+// Override the default Previous and Next button behavior
+frappe.utilsPlus.addTabButtons({
+  onNext: (frm, pt, ct, nt) => {
+    console.log(`Moving from ${ct} to ${nt}`);
+    frappe.utilsPlus.goToTab({ tab: nt });
+  },
+  onPrev: (frm, pt, ct, nt) => {
+    console.log(`Moving back from ${ct} to ${pt}`);
+    frappe.utilsPlus.goToTab({ tab: pt });
+  }
+});
+```
+
 #### Check for Next/Previous Tabs
 
 ```javascript

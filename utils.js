@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 2.5.0
+ * @version 2.6.2
  *
  * @module Utils
  */
@@ -179,9 +179,16 @@ const Utils = (function () {
 		const tabs = [];
 		const tabsJSON = {};
 
-		frm.meta.fields.forEach((field) => {
+		frm.meta.fields.forEach((field, index) => {
 			if (field.fieldtype === "Tab Break") {
 				if (excludeHidden && field.hidden) return;
+				if (excludeHidden) {
+					const next_field = frm.meta.fields[index + 1];
+					if (!next_field || next_field.fieldtype == 'Tab Break') {
+						// this tab is empty, so we skip it
+						return;
+					}
+				}
 				if (field.depends_on) {
 					let expr = field.depends_on.trim();
 					if (expr.startsWith("eval:")) expr = expr.substring(5);
@@ -596,8 +603,7 @@ const Utils = (function () {
 				}
 				if (debug && site.getEnvironment() === "development")
 					console.log(
-						`Setting ${field} to read_only: ${
-							isExceptionState ? 0 : 1
+						`Setting ${field} to read_only: ${isExceptionState ? 0 : 1
 						}`
 					);
 				frm.set_df_property(
@@ -665,8 +671,7 @@ const Utils = (function () {
 
 				if (debug && site.getEnvironment() === "development")
 					console.debug(
-						`Setting ${field} to hidden: ${
-							isExceptionState || !condition ? 0 : 1
+						`Setting ${field} to hidden: ${isExceptionState || !condition ? 0 : 1
 						}`
 					);
 				frm.set_df_property(
@@ -989,78 +994,68 @@ const Utils = (function () {
 	 * Adds navigation buttons (Previous, Next, and optionally custom buttons) to each tab-pane of the current form.
 	 * The buttons are appended to each .tab-pane element.
 	 *
-	 * Options can be provided via a props object:
-	 *   - saveTabs {string[]} (Optional): Array of tab fieldnames (or '*' for all) that trigger a save before navigation.
-	 *   - buttons {Object|Object[]} (Optional): Custom button configuration(s) to replace the Next button on specific tabs.
-	 *       Each button configuration may have:
-	 *         - tab {string}: The fieldname where the button should be rendered.
-	 *         - workflowStates {string[]} (Optional): Allowed workflow states for the button to render.
-	 *             If not provided, the button shows regardless of the current workflow state.
-	 *         - label {string} (Optional): The label to display on the button. Defaults to "Submit".
-	 *         - variant {string} (Optional): One of "Primary", "Secondary", "Destructive", "Outline", or "Ghost".
-	 *             Determines the CSS class for styling. Defaults to "Primary".
-	 *         - callback {function} (Optional): Callback to execute when the button is clicked.
-	 *             If omitted, logs "Custom button clicked on tab <tab>".
-	 *         - conditional {function} (Optional): A function that receives cur_frm and returns true if the button should be rendered.
+	 * @param {object} [props] - Optional configuration object.
+	 * @param {string[]} [props.saveTabs] - Array of tab fieldnames (or '*' for all) that trigger a save before navigation.
+	 * @param {string} [props.prevLabel="Previous"] - Custom label for the "Previous" button.
+	 * @param {string} [props.nextLabel="Next"] - Custom label for the "Next" button.
+	 * @param {function(object, string, string, string): void} [props.onPrev] - Callback to override the default "Previous" button behavior. Receives `frm`, `pt`, `ct`, and `nt` as arguments.
+	 * @param {function(object, string, string, string): void} [props.onNext] - Callback to override the default "Next" button behavior. Receives `frm`, `pt`, `ct`, and `nt` as arguments.
+	 * @param {object|object[]} [props.buttons] - Custom button configuration(s) to replace the Next button on specific tabs.
+	 * @param {string} props.buttons.tab - The fieldname where the button should be rendered.
+	 * @param {string[]} [props.buttons.workflowStates] - Allowed workflow states for the button to render.
+	 * @param {string} [props.buttons.label="Submit"] - The label to display on the button.
+	 * @param {string} [props.buttons.variant="Primary"] - One of "Primary", "Secondary", "Destructive", "Outline", or "Ghost".
+	 * @param {function(object, string): void} [props.buttons.callback] - Callback to execute when the button is clicked.
+	 * @param {function(object): boolean} [props.buttons.conditional] - A function that receives `cur_frm` and returns true if the button should be rendered.
+	 * @param {string} [props.className] - Custom CSS class to add to all buttons.
 	 *
-	 * @param {Object} [props] - Optional configuration object.
+	 * @returns {object} An object containing references to the created button elements.
 	 *
 	 * @example
-	 * // Example 1: Default navigation (no custom buttons or save behavior).
+	 * // Example 1: Default navigation.
 	 * Utils.addTabButtons();
 	 *
 	 * @example
-	 * // Example 2: Save on all tabs before navigation.
-	 * Utils.addTabButtons({ saveTabs: ['*'] });
+	 * // Example 2: Custom labels and save on all tabs.
+	 * Utils.addTabButtons({
+	 *   saveTabs: ['*'],
+	 *   prevLabel: 'Back',
+	 *   nextLabel: 'Continue'
+	 * });
 	 *
 	 * @example
-	 * // Example 3: Render a custom button on "final_tab" when workflow state is "Processing Application".
-	 * // The button is labeled "Submit Form" and appears only if a conditional check passes.
+	 * // Example 3: Override default navigation behavior.
 	 * Utils.addTabButtons({
-	 *   buttons: {
-	 *     tab: 'final_tab',
-	 *     workflowStates: ['Processing Application'],
-	 *     label: 'Submit Form',
-	 *     conditional: function(cur_frm) { return cur_frm.doc.approved === true; },
-	 *     callback: function(frm, tab) {
-	 *       console.log('Submit Form button clicked on tab ' + tab);
-	 *     }
+	 *   onNext: (frm, pt, ct, nt) => {
+	 *     console.log(`Moving from ${ct} to ${nt}`);
+	 *     Utils.goToTab({ tab: nt });
+	 *   },
+	 *   onPrev: (frm, pt, ct, nt) => {
+	 *     console.log(`Moving back from ${ct} to ${pt}`);
+	 *     Utils.goToTab({ tab: pt });
 	 *   }
 	 * });
 	 *
 	 * @example
-	 * // Example 4: Render multiple custom buttons on different tabs.
+	 * // Example 4: Custom button on a specific tab.
 	 * Utils.addTabButtons({
-	 *   buttons: [
-	 *     {
-	 *       tab: 'final_tab',
-	 *       workflowStates: ['Processing Application'],
-	 *       label: 'Submit Form',
-	 *       variant: 'Secondary',
-	 *       callback: function(frm, tab) {
-	 *         console.log('Submit Form button clicked on tab ' + tab);
-	 *       }
-	 *     },
-	 *     {
-	 *       tab: 'review_tab',
-	 *       workflowStates: ['Draft'],
-	 *       label: 'Review & Save',
-	 *       variant: 'destructive',
-	 *       callback: function(frm, tab) {
-	 *         console.log('Review & Save button clicked on tab ' + tab);
-	 *       }
+	 *   buttons: {
+	 *     tab: 'final_tab',
+	 *     workflowStates: ['Processing'],
+	 *     label: 'Submit Application',
+	 *     conditional: (frm) => frm.doc.approved === true,
+	 *     callback: (frm, tab) => {
+	 *       console.log('Submit button clicked on tab ' + tab);
 	 *     }
-	 *   ]
+	 *   }
 	 * });
-	 *
-	 * @example
-	 * Example 5: // Add bootstrap or Custom classes to you buttons
-	 * Utils.addTabButtons({ className: 'btn btn-info special-tab-button' });
 	 */
 	function addTabButtons(props) {
 		props = props || {};
 
 		const className = props.className || "";
+		const prevLabel = props.prevLabel || "Previous";
+		const nextLabel = props.nextLabel || "Next";
 
 		// Normalize buttons prop: if provided as a single object, wrap it in an array.
 		if (props.buttons && !Array.isArray(props.buttons)) {
@@ -1077,7 +1072,7 @@ const Utils = (function () {
 		};
 
 		const frm = cur_frm;
-		const tabsData = Utils.getTabs(true);
+		const tabsData = Utils.getTabs({ excludeHidden: true });
 		const tabs = tabsData.tabs;
 
 		const $tab_nav = $("div.nav-buttons");
@@ -1095,8 +1090,8 @@ const Utils = (function () {
 			// Build Previous button (left column) with className appended
 			const previousButtonHTML =
 				currentTabIndex > 0
-					? `<button class="btn ${className} btn-primary float-left tab-navigation" data-direction="previous">Previous</button>`
-					: `<button class="btn ${className} btn-primary float-left invisible" disabled>Previous</button>`;
+					? `<button class="btn ${className} btn-primary float-left tab-navigation" data-direction="previous">${prevLabel}</button>`
+					: `<button class="btn ${className} btn-primary float-left invisible" disabled>${prevLabel}</button>`;
 
 			// Determine custom buttons for this tab.
 			let customButtonsHTML = "";
@@ -1134,8 +1129,8 @@ const Utils = (function () {
 				customButtonsHTML !== ""
 					? customButtonsHTML
 					: currentTabIndex < tabs.length - 1
-					? `<button class="btn btn-primary ${className} float-right tab-navigation" data-direction="next">Next</button>`
-					: `<button class="btn btn-primary ${className} float-right invisible" disabled>Next</button>`;
+						? `<button class="btn btn-primary ${className} float-right tab-navigation" data-direction="next">${nextLabel}</button>`
+						: `<button class="btn btn-primary ${className} float-right invisible" disabled>${nextLabel}</button>`;
 
 			const buttonHtml = `
 		  <div class="flex form-section-buttons justify-between nav-buttons w-100" data-tab="${tabFieldname}">
@@ -1180,6 +1175,20 @@ const Utils = (function () {
 			const currentTabFieldname = $("#form-tabs li .active").data(
 				"fieldname"
 			);
+			const currentTabIndex = tabs.indexOf(currentTabFieldname);
+			const prevTab = tabs[currentTabIndex - 1] || null;
+			const nextTab = tabs[currentTabIndex + 1] || null;
+
+			if (direction === "next" && typeof props.onNext === "function") {
+				props.onNext(frm, prevTab, currentTabFieldname, nextTab);
+				return;
+			}
+
+			if (direction === "previous" && typeof props.onPrev === "function") {
+				props.onPrev(frm, prevTab, currentTabFieldname, nextTab);
+				return;
+			}
+
 			const saveTabs = props.saveTabs || [];
 			if (
 				saveTabs.indexOf("*") !== -1 ||
@@ -1343,7 +1352,7 @@ const Utils = (function () {
 											if (
 												debug &&
 												site.getEnvironment() ===
-													"development"
+												"development"
 											) {
 												console.debug(
 													`Field ${updateField.field} updated successfully`,
@@ -1356,7 +1365,7 @@ const Utils = (function () {
 											if (
 												debug &&
 												site.getEnvironment() ===
-													"development"
+												"development"
 											) {
 												console.error(
 													`Error updating field ${updateField.field}`,
@@ -1436,8 +1445,8 @@ const Utils = (function () {
 
 			const fieldsToUpdate =
 				setValue &&
-				typeof setValue === "object" &&
-				Object.keys(setValue).length > 0
+					typeof setValue === "object" &&
+					Object.keys(setValue).length > 0
 					? setValue
 					: {};
 
