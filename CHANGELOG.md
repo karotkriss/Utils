@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.6.2] - 2025-10-15
+
+### Added
+- **Tab Navigation**
+  - **`onPrev` and `onNext` Callbacks**: The `addTabButtons` function now accepts optional `onPrev` and `onNext` callbacks. These functions can be used to override the default "Previous" and "Next" button behavior, allowing for custom navigation logic. The callbacks receive the `frm` object and the fieldnames of the previous, current, and next tabs as arguments.
+
+### Fixed
+- **Tab Navigation**: Corrected an issue where the `getTabs` function was not being called correctly within the tab navigation logic, ensuring that hidden tabs are properly excluded.
+- **Code Formatting**: Addressed minor formatting inconsistencies in the codebase.
+
+
 ## [2.5.0] - 2025-09-01
 
 ### Added
