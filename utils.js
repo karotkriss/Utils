@@ -1066,6 +1066,8 @@ const Utils = (function () {
         props = props || {};
 
         const className = props.className || "";
+        const prevLabel = props.prevLabel || "Previous";
+        const nextLabel = props.nextLabel || "Next";
 
         // Normalize buttons prop: if provided as a single object, wrap it in an array.
         if (props.buttons && !Array.isArray(props.buttons)) {
@@ -1100,8 +1102,8 @@ const Utils = (function () {
             // Build Previous button (left column) with className appended
             const previousButtonHTML =
                 currentTabIndex > 0
-                    ? `<button class="btn ${className} btn-primary float-left tab-navigation" data-direction="previous">Previous</button>`
-                    : `<button class="btn ${className} btn-primary float-left invisible" disabled>Previous</button>`;
+                    ? `<button class="btn ${className} btn-primary float-left tab-navigation" data-direction="previous">${prevLabel}</button>`
+                    : `<button class="btn ${className} btn-primary float-left invisible" disabled>${prevLabel}</button>`;
 
             // Determine custom buttons for this tab.
             let customButtonsHTML = "";
@@ -1139,8 +1141,8 @@ const Utils = (function () {
                 customButtonsHTML !== ""
                     ? customButtonsHTML
                     : currentTabIndex < tabs.length - 1
-                        ? `<button class="btn btn-primary ${className} float-right tab-navigation" data-direction="next">Next</button>`
-                        : `<button class="btn btn-primary ${className} float-right invisible" disabled>Next</button>`;
+                        ? `<button class="btn btn-primary ${className} float-right tab-navigation" data-direction="next">${nextLabel}</button>`
+                        : `<button class="btn btn-primary ${className} float-right invisible" disabled>${nextLabel}</button>`;
 
             const buttonHtml = `
 		  <div class="flex form-section-buttons justify-between nav-buttons w-100" data-tab="${tabFieldname}">
