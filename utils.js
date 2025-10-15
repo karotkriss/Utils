@@ -1084,7 +1084,7 @@ const Utils = (function () {
 		};
 
 		const frm = cur_frm;
-		const tabsData = Utils.getTabs(true);
+		const tabsData = Utils.getTabs({ excludeHidden: true });
 		const tabs = tabsData.tabs;
 
 		const $tab_nav = $("div.nav-buttons");
