@@ -596,8 +596,7 @@ const Utils = (function () {
 				}
 				if (debug && site.getEnvironment() === "development")
 					console.log(
-						`Setting ${field} to read_only: ${
-							isExceptionState ? 0 : 1
+						`Setting ${field} to read_only: ${isExceptionState ? 0 : 1
 						}`
 					);
 				frm.set_df_property(
@@ -665,8 +664,7 @@ const Utils = (function () {
 
 				if (debug && site.getEnvironment() === "development")
 					console.debug(
-						`Setting ${field} to hidden: ${
-							isExceptionState || !condition ? 0 : 1
+						`Setting ${field} to hidden: ${isExceptionState || !condition ? 0 : 1
 						}`
 					);
 				frm.set_df_property(
@@ -1134,8 +1132,8 @@ const Utils = (function () {
 				customButtonsHTML !== ""
 					? customButtonsHTML
 					: currentTabIndex < tabs.length - 1
-					? `<button class="btn btn-primary ${className} float-right tab-navigation" data-direction="next">Next</button>`
-					: `<button class="btn btn-primary ${className} float-right invisible" disabled>Next</button>`;
+						? `<button class="btn btn-primary ${className} float-right tab-navigation" data-direction="next">Next</button>`
+						: `<button class="btn btn-primary ${className} float-right invisible" disabled>Next</button>`;
 
 			const buttonHtml = `
 		  <div class="flex form-section-buttons justify-between nav-buttons w-100" data-tab="${tabFieldname}">
@@ -1343,7 +1341,7 @@ const Utils = (function () {
 											if (
 												debug &&
 												site.getEnvironment() ===
-													"development"
+												"development"
 											) {
 												console.debug(
 													`Field ${updateField.field} updated successfully`,
@@ -1356,7 +1354,7 @@ const Utils = (function () {
 											if (
 												debug &&
 												site.getEnvironment() ===
-													"development"
+												"development"
 											) {
 												console.error(
 													`Error updating field ${updateField.field}`,
@@ -1436,8 +1434,8 @@ const Utils = (function () {
 
 			const fieldsToUpdate =
 				setValue &&
-				typeof setValue === "object" &&
-				Object.keys(setValue).length > 0
+					typeof setValue === "object" &&
+					Object.keys(setValue).length > 0
 					? setValue
 					: {};
 
