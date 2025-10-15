@@ -1187,6 +1187,20 @@ const Utils = (function () {
 			const currentTabFieldname = $("#form-tabs li .active").data(
 				"fieldname"
 			);
+			const currentTabIndex = tabs.indexOf(currentTabFieldname);
+			const prevTab = tabs[currentTabIndex - 1] || null;
+			const nextTab = tabs[currentTabIndex + 1] || null;
+
+			if (direction === "next" && typeof props.onNext === "function") {
+				props.onNext(frm, prevTab, currentTabFieldname, nextTab);
+				return;
+			}
+
+			if (direction === "previous" && typeof props.onPrev === "function") {
+				props.onPrev(frm, prevTab, currentTabFieldname, nextTab);
+				return;
+			}
+
 			const saveTabs = props.saveTabs || [];
 			if (
 				saveTabs.indexOf("*") !== -1 ||
