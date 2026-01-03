@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 2.6.2
+ * @version 2.7.0
  *
  * @module Utils
  */
@@ -702,8 +702,19 @@ const Utils = (function () {
 	 * // Navigate to the tab with fieldname "details_tab"
 	 * Utils.goToTab({ tab: "details_tab" });
 	 */
+	/**
+	 * Navigates to a specified tab in the current form and scrolls to its first valid field.
+	 *
+	 * @param {object} [props] - The configuration object.
+	 * @param {string} props.tab - The fieldname of the target tab.
+	 * @param {function(object): void} [props.callback] - A callback function to execute after navigation. Receives a context object.
+	 *
+	 * @example
+	 * // Navigate to the tab with fieldname "details_tab"
+	 * Utils.goToTab({ tab: "details_tab" });
+	 */
 	const goToTab = (props = {}) => {
-		const { tab, debug } = props;
+		const { tab, debug, callback, prevTab, nextTab } = props;
 
 		const frm = cur_frm;
 		if (!frm?.meta?.fields) {
@@ -738,21 +749,24 @@ const Utils = (function () {
 			return;
 		}
 		frm.scroll_to_field(firstValidField);
+		if (callback) {
+			callback({ frm, prevTab, currentTab: tab, nextTab });
+		}
 	};
 
 	/**
 	 * Navigates to the next tab in the current form.
 	 *
-	 * This function depends on the getTabs API to retrieve the list of tabs and then calls goToTab using the refactored props.
-	 *
+	 * @param {object} [props] - The configuration object.
 	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
+	 * @param {function(object): void} [props.callback] - A callback function to execute after navigation.
 	 *
 	 * @example
 	 * // Navigate to the next tab
 	 * goToTab.next();
 	 */
 	goToTab.next = (props = {}) => {
-		const { debug } = props;
+		const { debug, callback } = props;
 
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
@@ -780,7 +794,7 @@ const Utils = (function () {
 		const nextTabIndex = currentTabIndex + 1;
 		if (nextTabIndex < tabs.length) {
 			const nextTab = tabs[nextTabIndex];
-			goToTab({ tab: nextTab });
+			goToTab({ tab: nextTab, callback: callback, prevTab: currentTab, nextTab: tabs[nextTabIndex + 1] || null });
 		} else {
 			if (debug && site.getEnvironment() === "development")
 				console.warn(
@@ -792,16 +806,16 @@ const Utils = (function () {
 	/**
 	 * Navigates to the previous tab in the current form.
 	 *
-	 * This function depends on the getTabs API to retrieve the list of tabs and then calls goToTab using the refactored props.
-	 *
+	 * @param {object} [props] - The configuration object.
 	 * @param {boolean} [props.debug=false] - Flag for enabling logging in non-production environments.
+	 * @param {function(object): void} [props.callback] - A callback function to execute after navigation.
 	 *
 	 * @example
 	 * // Navigate to the previous tab
 	 * goToTab.previous();
 	 */
 	goToTab.previous = (props = {}) => {
-		const { debug } = props;
+		const { debug, callback } = props;
 
 		const { tabs } = getTabs({ excludeHidden: true });
 		if (tabs.length === 0) {
@@ -829,7 +843,7 @@ const Utils = (function () {
 		const previousTabIndex = currentTabIndex - 1;
 		if (previousTabIndex >= 0) {
 			const previousTab = tabs[previousTabIndex];
-			goToTab({ tab: previousTab });
+			goToTab({ tab: previousTab, callback: callback, prevTab: tabs[previousTabIndex - 1] || null, nextTab: currentTab });
 		} else {
 			if (debug && site.getEnvironment() === "development")
 				console.warn(
@@ -876,24 +890,30 @@ const Utils = (function () {
 	/**
 	 * Saves the current form and navigates to the specified tab.
 	 *
-	 * @param {string} tabFieldName - The fieldname of the target tab.
+	 * @param {object} props - The configuration object.
+	 * @param {string} props.tab - The fieldname of the target tab.
+	 * @param {function(object): void} [props.callback] - A callback function to execute after navigation.
 	 */
-	goToTab.save = function (tabFieldName) {
-		saveCallback(tabFieldName, goToTab);
+	goToTab.save = function (props) {
+		saveCallback(props.tab, () => goToTab(props));
 	};
 
 	/**
 	 * Saves the current form and navigates to the next tab.
+	 * @param {object} [props] - The configuration object.
+	 * @param {function(object): void} [props.callback] - A callback function to execute after navigation.
 	 */
-	goToTab.next.save = function () {
-		saveCallback(goToTab.next);
+	goToTab.next.save = function (props) {
+		saveCallback(() => goToTab.next(props));
 	};
 
 	/**
 	 * Saves the current form and navigates to the previous tab.
+	 * @param {object} [props] - The configuration object.
+	 * @param {function(object): void} [props.callback] - A callback function to execute after navigation.
 	 */
-	goToTab.previous.save = function () {
-		saveCallback(goToTab.previous);
+	goToTab.previous.save = function (props) {
+		saveCallback(() => goToTab.previous(props));
 	};
 
 	/**
@@ -990,67 +1010,124 @@ const Utils = (function () {
 		};
 	};
 
-	/**
-	 * Adds navigation buttons (Previous, Next, and optionally custom buttons) to each tab-pane of the current form.
-	 * The buttons are appended to each .tab-pane element.
-	 *
-	 * @param {object} [props] - Optional configuration object.
-	 * @param {string[]} [props.saveTabs] - Array of tab fieldnames (or '*' for all) that trigger a save before navigation.
-	 * @param {string} [props.prevLabel="Previous"] - Custom label for the "Previous" button.
-	 * @param {string} [props.nextLabel="Next"] - Custom label for the "Next" button.
-	 * @param {function(object, string, string, string): void} [props.onPrev] - Callback to override the default "Previous" button behavior. Receives `frm`, `pt`, `ct`, and `nt` as arguments.
-	 * @param {function(object, string, string, string): void} [props.onNext] - Callback to override the default "Next" button behavior. Receives `frm`, `pt`, `ct`, and `nt` as arguments.
-	 * @param {object|object[]} [props.buttons] - Custom button configuration(s) to replace the Next button on specific tabs.
-	 * @param {string} props.buttons.tab - The fieldname where the button should be rendered.
-	 * @param {string[]} [props.buttons.workflowStates] - Allowed workflow states for the button to render.
-	 * @param {string} [props.buttons.label="Submit"] - The label to display on the button.
-	 * @param {string} [props.buttons.variant="Primary"] - One of "Primary", "Secondary", "Destructive", "Outline", or "Ghost".
-	 * @param {function(object, string): void} [props.buttons.callback] - Callback to execute when the button is clicked.
-	 * @param {function(object): boolean} [props.buttons.conditional] - A function that receives `cur_frm` and returns true if the button should be rendered.
-	 * @param {string} [props.className] - Custom CSS class to add to all buttons.
-	 *
-	 * @returns {object} An object containing references to the created button elements.
-	 *
-	 * @example
-	 * // Example 1: Default navigation.
-	 * Utils.addTabButtons();
-	 *
-	 * @example
-	 * // Example 2: Custom labels and save on all tabs.
-	 * Utils.addTabButtons({
-	 *   saveTabs: ['*'],
-	 *   prevLabel: 'Back',
-	 *   nextLabel: 'Continue'
-	 * });
-	 *
-	 * @example
-	 * // Example 3: Override default navigation behavior.
-	 * Utils.addTabButtons({
-	 *   onNext: (frm, pt, ct, nt) => {
-	 *     console.log(`Moving from ${ct} to ${nt}`);
-	 *     Utils.goToTab({ tab: nt });
-	 *   },
-	 *   onPrev: (frm, pt, ct, nt) => {
-	 *     console.log(`Moving back from ${ct} to ${pt}`);
-	 *     Utils.goToTab({ tab: pt });
-	 *   }
-	 * });
-	 *
-	 * @example
-	 * // Example 4: Custom button on a specific tab.
-	 * Utils.addTabButtons({
-	 *   buttons: {
-	 *     tab: 'final_tab',
-	 *     workflowStates: ['Processing'],
-	 *     label: 'Submit Application',
-	 *     conditional: (frm) => frm.doc.approved === true,
-	 *     callback: (frm, tab) => {
-	 *       console.log('Submit button clicked on tab ' + tab);
-	 *     }
-	 *   }
-	 * });
-	 */
-	function addTabButtons(props) {
+	        /**
+	         * Adds navigation buttons (Previous, Next, and optionally custom buttons) to each tab-pane of the current form.
+	         * The buttons are appended to each .tab-pane element.
+	         *
+	         * @param {object} [props] - Optional configuration object.
+	         * @param {string[]} [props.saveTabs] - Array of tab fieldnames (or '*' for all) that are eligible for saving. Saving behavior is further controlled by `saveConfig` if provided.
+	         * @param {object} [props.saveConfig] - Configuration for controlling save direction for tabs specified in `saveTabs`.
+	         * @param {('forward'|'backward'|'bidirectional')} [props.saveConfig.direction='bidirectional'] - Specifies when to save: 'forward' (on next), 'backward' (on previous), or 'bidirectional' (on both).
+	         * @param {string} [props.prevLabel="Previous"] - Custom label for the "Previous" button.
+	         * @param {string} [props.nextLabel="Next"] - Custom label for the "Next" button.
+	         * @param {function(object): boolean|void} [props.beforeNavigation] - Callback to execute before tab navigation. Receives an object with `{ frm, prevTab, currentTab, nextTab, continueNavigation }`. Return `false` to prevent navigation.
+	         * @param {function(object): void} [props.onPrev] - Callback to override the default "Previous" button behavior. Receives an object with `{ frm, prevTab, currentTab, nextTab, continueNavigation }`.
+	         * @param {function(object): void} [props.onNext] - Callback to override the default "Next" button behavior. Receives an object with `{ frm, prevTab, currentTab, nextTab, continueNavigation }`.
+	         * @param {function(object): void} [props.afterNavigation] - Callback to execute after tab navigation is complete. Receives an object with `{ frm, prevTab, currentTab, nextTab }`.
+	         * @param {object|object[]} [props.buttons] - Custom button configuration(s) to replace the Next button on specific tabs.
+	         * @param {string} props.buttons.tab - The fieldname where the button should be rendered.
+	         * @param {string[]} [props.buttons.workflowStates] - Allowed workflow states for the button to render.
+	         * @param {string} [props.buttons.label="Submit"] - The label to display on the button.
+	         * @param {string} [props.buttons.variant="Primary"] - One of "Primary", "Secondary", "Destructive", "Outline", or "Ghost".
+	         * @param {function(object, string): void} [props.buttons.callback] - Callback to execute when the button is clicked.
+	         * @param {function(object): boolean} [props.buttons.conditional] - A function that receives `cur_frm` and returns true if the button should be rendered.
+	         * @param {string} [props.className] - Custom CSS class to add to all buttons.
+	         *
+	         * @returns {object} An object containing references to the created button elements.
+	         *
+	         * @example
+	         * // Example 1: Default navigation.
+	         * Utils.addTabButtons();
+	         *
+	         * @example
+	         * // Example 2: Custom labels and save on all tabs.
+	         * Utils.addTabButtons({
+	         *   saveTabs: ['*'],
+	         *   prevLabel: 'Back',
+	         *   nextLabel: 'Continue'
+	         * });
+	         *
+	         * @example
+	         * // Example 3: Override default navigation and conditionally continue.
+	         * Utils.addTabButtons({
+	         *   onNext: ({ frm, currentTab, nextTab, continueNavigation }) => {
+	         *     if (frm.doc.some_field) {
+	         *       console.log(`Custom logic executed on tab ${currentTab}. Now continuing to ${nextTab}.`);
+	         *       continueNavigation();
+	         *     } else {
+	         *       console.log('Custom logic executed. Navigation stopped.');
+	         *     }
+	         *   },
+	         *   afterNavigation: ({ frm, prevTab, currentTab, nextTab }) => {
+	         *     console.log(`Navigated from ${prevTab} to ${currentTab}`);
+	         *   }
+	         * });
+	         *
+	         * @example
+	         * // Example 4: Custom button on a specific tab.
+	         * Utils.addTabButtons({
+	         *   buttons: {
+	         *     tab: 'final_tab',
+	         *     workflowStates: ['Processing'],
+	         *     label: 'Submit Application',
+	         *     conditional: (frm) => frm.doc.approved === true,
+	         *     callback: (frm, tab) => {
+	         *       console.log('Submit button clicked on tab ' + tab);
+	         *     }
+	         *   }
+	         * });
+	         *
+	         * @example
+	         * // Example 5: Advanced usage with validation, confirmation, and custom buttons.
+	         * Utils.addTabButtons({
+	         *   prevLabel: 'Back',
+	         *   nextLabel: 'Next',
+	         *   onPrev: ({ continueNavigation }) => {
+	         *     frappe.confirm('Are you sure you want to go back?', continueNavigation);
+	         *   },
+	         *   onNext: ({ frm, currentTab, continueNavigation }) => {
+	         *     if (currentTab === 'personal_info_tab') {
+	         *       if (frm.doc.email_address && frm.doc.phone_number) {
+	         *         continueNavigation();
+	         *       } else {
+	         *         frappe.msgprint('Please fill in both email and phone number before proceeding.');
+	         *       }
+	         *     } else {
+	         *       continueNavigation();
+	         *     }
+	         *   },
+	         *   afterNavigation: ({ frm, currentTab }) => {
+	         *     if (currentTab === 'summary_tab') {
+	         *       frm.refresh_field('summary_html_field');
+	         *     }
+	         *   },
+	         *   buttons: {
+	         *     tab: 'summary_tab',
+	         *     label: 'Submit',
+	         *     callback: (frm) => {
+	         *       frm.save('submit');
+	         *     }
+	         *   }
+	         * });
+	         *
+	         * @example
+	         * // Example 6: Save only when navigating forward for tabs in `saveTabs`.
+	         * Utils.addTabButtons({
+	         *   saveTabs: ['personal_info_tab', 'contact_info_tab'],
+	         *   saveConfig: { direction: 'forward' }
+	         * });
+	         *
+	         * @example
+	         * // Example 7: Prevent navigation based on a condition.
+	         * Utils.addTabButtons({
+	         *   beforeNavigation: ({ frm, currentTab }) => {
+	         *     if (currentTab === 'personal_info_tab' && !frm.doc.is_agreed) {
+	         *       frappe.msgprint('Please agree to the terms before leaving this tab.');
+	         *       return false; // Prevent navigation
+	         *     }
+	         *     return true; // Allow navigation
+	         *   }
+	    	 */    function addTabButtons(props) {
 		props = props || {};
 
 		const className = props.className || "";
@@ -1179,32 +1256,67 @@ const Utils = (function () {
 			const prevTab = tabs[currentTabIndex - 1] || null;
 			const nextTab = tabs[currentTabIndex + 1] || null;
 
+			const continueNavigation = () => {
+				const nav_props = { callback: props.afterNavigation };
+				let shouldSave = false;
+
+				const saveTabs = props.saveTabs || [];
+				const isCurrentTabInSaveTabs = saveTabs.indexOf("*") !== -1 || saveTabs.indexOf(currentTabFieldname) !== -1;
+
+				if (isCurrentTabInSaveTabs) { // Only consider saving if the current tab is in saveTabs
+					if (props.saveConfig) {
+						const { direction: saveDirection } = props.saveConfig;
+
+						if (saveDirection === 'forward' && direction === 'next') {
+							shouldSave = true;
+						} else if (saveDirection === 'backward' && direction === 'previous') {
+							shouldSave = true;
+						} else if (saveDirection === 'bidirectional') {
+							shouldSave = true;
+						}
+					} else { // If saveConfig is not provided, but saveTabs is, then save
+						shouldSave = true;
+					}
+				}
+
+				if (shouldSave) {
+					if (direction === "previous") {
+						Utils.goToTab.previous.save(nav_props);
+					} else {
+						Utils.goToTab.next.save(nav_props);
+					}
+				} else {
+					if (direction === "previous") {
+						Utils.goToTab.previous(nav_props);
+					} else {
+						Utils.goToTab.next(nav_props);
+					}
+				}
+			};
+
+			const context = {
+				frm: frm,
+				prevTab: prevTab,
+				currentTab: currentTabFieldname,
+				nextTab: nextTab,
+				continueNavigation: continueNavigation
+			};
+
+			// New beforeNavigation logic
+			if (typeof props.beforeNavigation === "function") {
+				const shouldProceed = props.beforeNavigation(context);
+				if (shouldProceed === false) {
+					// If beforeNavigation explicitly returns false, stop the navigation
+					return;
+				}
+			}
+
 			if (direction === "next" && typeof props.onNext === "function") {
-				props.onNext(frm, prevTab, currentTabFieldname, nextTab);
-				return;
-			}
-
-			if (direction === "previous" && typeof props.onPrev === "function") {
-				props.onPrev(frm, prevTab, currentTabFieldname, nextTab);
-				return;
-			}
-
-			const saveTabs = props.saveTabs || [];
-			if (
-				saveTabs.indexOf("*") !== -1 ||
-				saveTabs.indexOf(currentTabFieldname) !== -1
-			) {
-				if (direction === "previous") {
-					Utils.goToTab.previous.save();
-				} else {
-					Utils.goToTab.next.save();
-				}
+				props.onNext(context);
+			} else if (direction === "previous" && typeof props.onPrev === "function") {
+				props.onPrev(context);
 			} else {
-				if (direction === "previous") {
-					Utils.goToTab.previous();
-				} else {
-					Utils.goToTab.next();
-				}
+				continueNavigation();
 			}
 		});
 

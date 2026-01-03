@@ -1,5 +1,37 @@
 # Changelog
 
+## [2.7.0] - 2026-01-03
+
+### Added
+- **Navigation Callback System**
+  - All navigation functions (`goToTab`, `goToTab.next`, `goToTab.previous`) now support optional `callback` parameter for post-navigation actions
+  - Callbacks receive context object with `{ frm, prevTab, currentTab, nextTab }`
+
+- **Advanced Save Configuration**
+  - **`saveConfig`**: Fine-grained control over when form saves occur during navigation
+  - **Directional Save Options**: `'forward'`, `'backward'`, or `'bidirectional'` (default)
+  - Save only when clicking "Next", "Previous", or both
+
+- **Navigation Lifecycle Hooks**
+  - **`beforeNavigation`**: Pre-flight validation hook that can block navigation by returning `false`
+  - **`afterNavigation`**: Post-navigation hook for cleanup, analytics, or field refreshing
+  - Both hooks receive context object with form and tab information
+
+- **Enhanced `onNext` / `onPrev` Callbacks**
+  - **Breaking Change**: Callbacks now use object destructuring instead of positional arguments
+  - Added `continueNavigation()` function for explicit navigation control
+  - Context object includes: `{ frm, prevTab, currentTab, nextTab, continueNavigation }`
+
+### Changed
+- **`goToTab.save()` Signature**: Now accepts object parameter `{ tab, callback }` instead of string
+- **`goToTab.next.save()` and `goToTab.previous.save()`**: Now accept `{ callback }` parameter
+- **`onNext` and `onPrev` Callbacks**: Changed from positional arguments to object destructuring (breaking change)
+
+### Migration Notes
+- Update `onNext`/`onPrev` callbacks to use object destructuring and call `continueNavigation()`
+- Convert `goToTab.save('tab')` to `goToTab.save({ tab: 'tab' })`
+- All new features are backward compatible except for `onNext`/`onPrev` signature changes
+
 ## [2.6.2] - 2025-10-15
 
 ### Added
