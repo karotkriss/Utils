@@ -102,7 +102,7 @@ bench --site $SITE_NAME clear-cache
 bench --site $SITE_NAME clear-website-cache
 ```
 
-> You should now be able to use any Utils method by calling `frappe.utilsPlus[method]` client side, <br>
+> You should now be able to use any Utils method by calling `Utils[method]` client side, <br>
 > You may also need to clear your browser cache as well. <br>
 > Reference to [Usage](#usage) for all a list methods and how to use them.
 
@@ -128,16 +128,16 @@ app_include_js = [
 #### Get Tabs
 ```javascript
 // Get all tabs
-const { tabs, json } = frappe.utilsPlus.getTabs();
+const { tabs, json } = Utils.getTabs();
 console.log("Tabs:", tabs);
 
 // Exclude hidden tabs
-const { tabs } = frappe.utilsPlus.getTabs({ excludeHidden: true });
+const { tabs } = Utils.getTabs({ excludeHidden: true });
 ```
 
 #### Get Fields in Tab
 ```javascript
-const { fields, json } = frappe.utilsPlus.getFieldsInTab({ 
+const { fields, json } = Utils.getFieldsInTab({ 
   tab: "details_tab" 
 });
 console.log("Fields:", fields);
@@ -145,14 +145,14 @@ console.log("Fields:", fields);
 
 #### Get Fields in Section
 ```javascript
-const { fields, json } = frappe.utilsPlus.getFieldsInSection({ 
+const { fields, json } = Utils.getFieldsInSection({ 
   section: "personal_info" 
 });
 ```
 
 #### Get Fields in Column
 ```javascript
-const { fields, json } = frappe.utilsPlus.getFieldsInColumn({ 
+const { fields, json } = Utils.getFieldsInColumn({ 
   column: "left_column" 
 });
 ```
@@ -161,7 +161,7 @@ const { fields, json } = frappe.utilsPlus.getFieldsInColumn({
 
 #### Check Mandatory Fields
 ```javascript
-const result = frappe.utilsPlus.checkMandatory({ 
+const result = Utils.checkMandatory({ 
   fields: ["first_name", "last_name", "email"] 
 });
 
@@ -175,7 +175,7 @@ if (result !== true) {
 
 #### Change Workflow State
 ```javascript
-frappe.utilsPlus.changeWorkflowState({
+Utils.changeWorkflowState({
   newState: "Approved",
   currentStateCheck: "Pending Review",
   autoSave: true
@@ -185,7 +185,7 @@ frappe.utilsPlus.changeWorkflowState({
 #### Make Fields Read-Only
 ```javascript
 // Make fields read-only except for specific roles
-frappe.utilsPlus.makeReadOnly({
+Utils.makeReadOnly({
   fields: ["salary", "bonus"],
   permissions: ["HR Manager", "System Manager"],
   exceptionStates: ["Draft"],
@@ -197,7 +197,7 @@ frappe.utilsPlus.makeReadOnly({
 #### Hide Fields
 ```javascript
 // Hide fields unless in Draft state
-frappe.utilsPlus.hideFields({
+Utils.hideFields({
   fields: ["phone", "email"],
   exceptionStates: ["Draft"],
   conditional: () => {
@@ -212,10 +212,10 @@ frappe.utilsPlus.hideFields({
 #### Go To Tab
 ```javascript
 // Navigate to a specific tab
-frappe.utilsPlus.goToTab({ tab: "details_tab" });
+Utils.goToTab({ tab: "details_tab" });
 
 // With callback
-frappe.utilsPlus.goToTab({ 
+Utils.goToTab({ 
   tab: "summary_tab",
   callback: ({ frm, currentTab }) => {
     frm.refresh_field('summary_html');
@@ -226,23 +226,23 @@ frappe.utilsPlus.goToTab({
 #### Navigate to Next or Previous Tab
 ```javascript
 // Navigate to the next tab
-frappe.utilsPlus.goToTab.next();
+Utils.goToTab.next();
 
 // With callback
-frappe.utilsPlus.goToTab.next({
+Utils.goToTab.next({
   callback: ({ frm, prevTab, currentTab }) => {
     console.log(`Moved from ${prevTab} to ${currentTab}`);
   }
 });
 
 // Navigate to the previous tab
-frappe.utilsPlus.goToTab.previous();
+Utils.goToTab.previous();
 ```
 
 #### Save and Navigate
 ```javascript
 // Save form and navigate to a specific tab
-frappe.utilsPlus.goToTab.save({ 
+Utils.goToTab.save({ 
   tab: "final_tab",
   callback: ({ frm }) => {
     frappe.msgprint('Form saved and navigated');
@@ -250,14 +250,14 @@ frappe.utilsPlus.goToTab.save({
 });
 
 // Save form and go to the next tab
-frappe.utilsPlus.goToTab.next.save({
+Utils.goToTab.next.save({
   callback: ({ currentTab }) => {
     console.log(`Saved and moved to ${currentTab}`);
   }
 });
 
 // Save form and go to the previous tab
-frappe.utilsPlus.goToTab.previous.save();
+Utils.goToTab.previous.save();
 ```
 
 ### Tab Buttons & Navigation Helpers
@@ -266,13 +266,13 @@ frappe.utilsPlus.goToTab.previous.save();
 
 ```javascript
 // Basic navigation buttons
-frappe.utilsPlus.addTabButtons();
+Utils.addTabButtons();
 ```
 
 #### Styling Tab Buttons
 ```javascript
 // Add bootstrap or custom classes
-frappe.utilsPlus.addTabButtons({ 
+Utils.addTabButtons({ 
   className: 'btn-lg shadow-sm' 
 });
 ```
@@ -280,17 +280,17 @@ frappe.utilsPlus.addTabButtons({
 #### Saving and Navigation
 ```javascript
 // Save on specific tabs
-frappe.utilsPlus.addTabButtons({ 
+Utils.addTabButtons({ 
   saveTabs: ['personal_details', 'professional_profile'] 
 });
 
 // Save on all tabs
-frappe.utilsPlus.addTabButtons({ 
+Utils.addTabButtons({ 
   saveTabs: ['*'] 
 });
 
 // Save only when going forward (NEW in v2.7.0)
-frappe.utilsPlus.addTabButtons({ 
+Utils.addTabButtons({ 
   saveTabs: ['*'],
   saveConfig: { direction: 'forward' }
 });
@@ -298,7 +298,7 @@ frappe.utilsPlus.addTabButtons({
 
 #### Replace Next Button with Custom Buttons
 ```javascript
-frappe.utilsPlus.addTabButtons({
+Utils.addTabButtons({
   buttons: [
     {
       tab: 'final_tab',
@@ -333,7 +333,7 @@ frappe.utilsPlus.addTabButtons({
 
 #### Override Default Navigation (v2.7.0 Syntax)
 ```javascript
-frappe.utilsPlus.addTabButtons({
+Utils.addTabButtons({
   onNext: ({ frm, currentTab, nextTab, continueNavigation }) => {
     console.log(`Moving from ${currentTab} to ${nextTab}`);
     
@@ -357,7 +357,7 @@ frappe.utilsPlus.addTabButtons({
 
 #### Advanced Navigation with Lifecycle Hooks (NEW in v2.7.0)
 ```javascript
-frappe.utilsPlus.addTabButtons({
+Utils.addTabButtons({
   prevLabel: 'Back',
   nextLabel: 'Continue',
   
@@ -403,19 +403,19 @@ frappe.utilsPlus.addTabButtons({
 #### Directional Save Control (NEW in v2.7.0)
 ```javascript
 // Save only when going forward
-frappe.utilsPlus.addTabButtons({
+Utils.addTabButtons({
   saveTabs: ['personal_info', 'contact_info', 'documents'],
   saveConfig: { direction: 'forward' }
 });
 
 // Save only when going backward
-frappe.utilsPlus.addTabButtons({
+Utils.addTabButtons({
   saveTabs: ['review_tab'],
   saveConfig: { direction: 'backward' }
 });
 
 // Save on both directions (default)
-frappe.utilsPlus.addTabButtons({
+Utils.addTabButtons({
   saveTabs: ['*'],
   saveConfig: { direction: 'bidirectional' }
 });
@@ -424,13 +424,13 @@ frappe.utilsPlus.addTabButtons({
 #### Check for Next/Previous Tabs
 ```javascript
 // Determine if there is a next tab
-const { hasNext, nextTab } = frappe.utilsPlus.hasNextTab();
+const { hasNext, nextTab } = Utils.hasNextTab();
 if (hasNext) {
   console.log("Next tab:", nextTab);
 }
 
 // Determine if there is a previous tab
-const { hasPrevious, previousTab } = frappe.utilsPlus.hasPreviousTab();
+const { hasPrevious, previousTab } = Utils.hasPreviousTab();
 if (hasPrevious) {
   console.log("Previous tab:", previousTab);
 }
@@ -441,12 +441,12 @@ if (hasPrevious) {
 #### Confirm
 ```javascript
 // Require confirmation before workflow action
-frappe.utilsPlus.action.confirm({
+Utils.action.confirm({
   action: "Submit"
 });
 
 // With custom message and field update
-frappe.utilsPlus.action.confirm({
+Utils.action.confirm({
   action: "Submit",
   message: "Are you sure you want to submit this document?",
   debug: true,
@@ -463,7 +463,7 @@ Intercept workflow action to compose email before proceeding:
 ```javascript
 frappe.ui.form.on("Leave Application", {
   refresh: function(frm) {
-    frappe.utilsPlus.action.composeEmail({
+    Utils.action.composeEmail({
       action: "Reject",
       debug: true,
       setValue: {
@@ -492,7 +492,7 @@ frappe.ui.form.on("Leave Application", {
 #### Retrieve All Workflow Transitions
 ```javascript
 // Get all transitions
-const transitions = frappe.utilsPlus.workflow.getAllTransitions();
+const transitions = Utils.workflow.getAllTransitions();
 
 // Log all transitions
 transitions.forEach(({ state, next_state, action }) =>
@@ -506,7 +506,7 @@ console.log(transitions.length ? "Transitions available" : "No transitions found
 #### Retrieve Valid Transitions for Current State
 ```javascript
 // Get transitions from current state
-const transitions = frappe.utilsPlus.workflow.getTransitions();
+const transitions = Utils.workflow.getTransitions();
 
 // Log them
 transitions.forEach(({ action, next_state }) => 
@@ -521,7 +521,7 @@ console.log(hasRejectAction ? "Rejection possible" : "No rejection available");
 #### Retrieve All Future Transitions
 ```javascript
 // Get all possible future transitions
-const futureTransitions = frappe.utilsPlus.workflow.getFutureTransitions();
+const futureTransitions = Utils.workflow.getFutureTransitions();
 
 // Log them
 futureTransitions.forEach(({ state, next_state, action }) =>
@@ -535,7 +535,7 @@ const isApprovalPossible = futureTransitions.some(
 console.log(isApprovalPossible ? "Approval possible" : "Approval not possible");
 
 // Get future transitions from a specific state
-const fromDraft = frappe.utilsPlus.workflow.getFutureTransitions({ 
+const fromDraft = Utils.workflow.getFutureTransitions({ 
   state: "Draft" 
 });
 ```
@@ -543,7 +543,7 @@ const fromDraft = frappe.utilsPlus.workflow.getFutureTransitions({
 #### Get Available Actions
 ```javascript
 // Get all available workflow actions
-const actions = frappe.utilsPlus.workflow.getActions();
+const actions = Utils.workflow.getActions();
 console.log(actions); // ["Approve", "Reject", "Request Changes"]
 
 // Check if specific action is available
@@ -556,19 +556,19 @@ if (actions.includes("Approve")) {
 
 #### Get Installed Apps
 ```javascript
-const apps = frappe.utilsPlus.site.apps();
+const apps = Utils.site.apps();
 console.log(apps); 
 // [{ name: "frappe", version: "v13.0.1" }, { name: "erpnext", version: "v13.0.2" }]
 ```
 
 #### Get Environment
 ```javascript
-const env = frappe.utilsPlus.site.getEnvironment();
+const env = Utils.site.getEnvironment();
 console.log(`Current Environment: ${env}`); 
 // "development" or "production"
 
 // Use in conditional logic
-if (frappe.utilsPlus.site.getEnvironment() === "development") {
+if (Utils.site.getEnvironment() === "development") {
   console.log("Running in development mode");
 }
 ```
@@ -580,7 +580,7 @@ Monitor fields and execute callbacks when they change:
 
 ```javascript
 // Watch customer and item fields
-const watchers = frappe.utilsPlus.observer.watch({
+const watchers = Utils.observer.watch({
   fields: ['customer', 'item_code'],
   callback: (value, frm) => {
     console.log(`Field changed to: ${value}`);
@@ -596,7 +596,7 @@ const customerWatcherId = watchers.customer.id;
 #### Multiple Independent Watchers
 ```javascript
 // Multiple watchers on the same field
-const priceWatcher = frappe.utilsPlus.observer.watch({
+const priceWatcher = Utils.observer.watch({
   fields: ['rate'],
   callback: (value, frm) => {
     if (value > 1000) {
@@ -605,7 +605,7 @@ const priceWatcher = frappe.utilsPlus.observer.watch({
   }
 });
 
-const discountWatcher = frappe.utilsPlus.observer.watch({
+const discountWatcher = Utils.observer.watch({
   fields: ['rate'],
   callback: (value, frm) => {
     if (value > 5000) {
@@ -618,14 +618,14 @@ const discountWatcher = frappe.utilsPlus.observer.watch({
 #### Stop Watching Fields
 ```javascript
 // Stop specific watcher by ID
-frappe.utilsPlus.observer.unwatch({
+Utils.observer.unwatch({
   fields: ['customer'],
   id: customerWatcherId,
   debug: true
 });
 
 // Stop ALL watchers on a field
-frappe.utilsPlus.observer.unwatch({
+Utils.observer.unwatch({
   fields: ['item_code'],
   debug: true
 });
@@ -639,7 +639,7 @@ watchers.customer.unwatch();
 frappe.ui.form.on("Sales Order", {
   refresh: function(frm) {
     if (frm.doc.workflow_state === 'Draft') {
-      frappe.utilsPlus.observer.watch({
+      Utils.observer.watch({
         fields: ['customer', 'delivery_date'],
         callback: (value, frm) => {
           frm.trigger('validate_draft_fields');
