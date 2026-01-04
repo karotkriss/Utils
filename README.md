@@ -57,7 +57,7 @@ This module is especially useful in custom Frappe apps, helping you build dynami
 - **Tab Navigation**: Navigate between tabs with save support and callbacks
 - **Custom Tab Buttons**: Add Previous/Next/Custom buttons with advanced workflows
 - **Workflow Management**: Retrieve actions, transitions, and future states
-- **Action Interception**: Confirm or compose emails before workflow actions
+- **Action Interception**: Confirm, compose emails, or edit fields before workflow actions
 - **Field Observers**: Watch field changes with multiple independent listeners
 - **Site Information**: Get environment and installed apps
 - **Navigation Lifecycle**: beforeNavigation, onNext/onPrev, afterNavigation hooks
@@ -486,6 +486,34 @@ frappe.ui.form.on("Leave Application", {
   }
 });
 ```
+
+#### Edit Fields
+Intercept workflow action to edit specific fields before proceeding:
+
+```javascript
+frappe.ui.form.on("Purchase Order", {
+  refresh: function(frm) {
+    Utils.action.editFields({
+      action: "Approve",
+      title: "Approval Details",
+      fields: [
+        { fieldname: "approved_by", reqd: 1 },
+        { fieldname: "approval_date", reqd: 1 },
+        { fieldname: "approval_notes", reqd: 0 }
+      ],
+      primary_action_label: "Approve & Save",
+      debug: true
+    });
+  }
+});
+```
+
+**Features:**
+- Automatically fetches field metadata from the form
+- Supports all standard Frappe field types
+- Pre-fills current values from the document
+- Validates required fields before submission
+- Updates document and refreshes form after submission
 
 ### Workflow Transition and Action Retrieval
 

@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 2.7.0
+ * @version 2.8.1
  *
  * @module Utils
  */
@@ -1625,6 +1625,273 @@ const Utils = (function () {
 								}
 							}
 						}
+					} catch (error) {
+						throw error;
+					}
+				},
+			});
+		},
+		/**
+		 * Intercepts a workflow action by opening a dialog to edit specified fields.
+		 * The workflow action proceeds after the user submits the form with valid values.
+		 *
+		 * @namespace Utils.action
+		 *
+		 * @param {Object} props - The configuration object.
+		 * @param {string} props.action - The workflow action name to intercept (e.g., "Approve", "Reject").
+		 * @param {Array<Object>} props.fields - Array of field configurations to display in the dialog.
+		 * @param {string} props.fields[].fieldname - The fieldname to edit.
+		 * @param {number} [props.fields[].reqd=0] - Whether the field is required (1) or optional (0).
+		 * @param {string} [props.title] - Custom dialog title (defaults to "Edit Fields - [action]").
+		 * @param {string} [props.primary_action_label] - Label for the primary action button (defaults to the action name).
+		 * @param {boolean} [props.debug=false] - Enable debug logging.
+		 *
+		 * @example
+		 * // Intercept "Approve" action and require the user to fill in approval details
+		 * Utils.action.editFields({
+		 *   action: "Approve",
+		 *   title: "Approval Details",
+		 *   fields: [
+		 *     { fieldname: "approved_by", reqd: 1 },
+		 *     { fieldname: "approval_date", reqd: 1 },
+		 *     { fieldname: "approval_notes", reqd: 0 }
+		 *   ],
+		 *   primary_action_label: "Approve & Save",
+		 *   debug: true
+		 * });
+		 */
+		editFields: (props = {}) => {
+			const {
+				action,
+				fields = [],
+				title,
+				primary_action_label,
+				debug = false,
+			} = props;
+			const isDevelopment =
+				debug && site?.getEnvironment() === "development";
+
+			if (isDevelopment) {
+				console.group(`Utils.action.editFields(): Initializing for action "${action}"`);
+				console.log("Configuration:", {
+					action,
+					fields: fields.map(f => f.fieldname || f),
+					title: title || `Edit Fields - ${action}`,
+					primary_action_label: primary_action_label || action,
+					debug
+				});
+			}
+
+			if (!action) {
+				if (isDevelopment) {
+					console.warn(
+						"Utils.action.editFields(): No action provided."
+					);
+					console.groupEnd();
+				}
+				return;
+			}
+
+			if (!fields || !Array.isArray(fields) || fields.length === 0) {
+				if (isDevelopment) {
+					console.warn(
+						"Utils.action.editFields(): No fields provided or invalid fields array."
+					);
+					console.groupEnd();
+				}
+				return;
+			}
+
+			const uniqueActionFlag = `__${toCamelCase(action)}EditFieldsIntercept`;
+			if (frappe[uniqueActionFlag]) {
+				if (isDevelopment) {
+					console.log(`Intercept already registered for action "${action}"`);
+					console.groupEnd();
+				}
+				return;
+			}
+			frappe[uniqueActionFlag] = true;
+
+			if (isDevelopment) {
+				console.log(`Registered intercept with flag: ${uniqueActionFlag}`);
+				console.groupEnd();
+			}
+
+			frappe.ui.form.on(cur_frm.doc.doctype, {
+				before_workflow_action: async () => {
+					if (cur_frm.selected_workflow_action !== action) return;
+
+					if (isDevelopment) {
+						console.group(`Utils.action.editFields(): Intercepting Workflow Action "${action}"`);
+						console.log("DocType:", cur_frm.doctype);
+						console.log("Document:", cur_frm.docname);
+						console.log("Current Workflow State:", cur_frm.doc.workflow_state);
+					}
+					frappe.dom.unfreeze();
+
+					try {
+						await new Promise((resolve, reject) => {
+							// Track if the action was completed successfully
+							let actionCompleted = false;
+
+							// Build dialog fields from provided fieldnames
+							const dialogFields = fields.map((fieldConfig) => {
+								const { fieldname, reqd = 0 } = fieldConfig;
+
+								// Get field metadata from the form
+								const fieldMeta = cur_frm.fields_dict[fieldname];
+								if (!fieldMeta) {
+									if (isDevelopment)
+										console.warn(
+											`Utils.action.editFields(): Field "${fieldname}" not found in form.`
+										);
+									return null;
+								}
+
+								// Build dialog field definition from form field metadata
+								const dialogField = {
+									label: fieldMeta.df.label || fieldname,
+									fieldname: fieldname,
+									fieldtype: fieldMeta.df.fieldtype || "Data",
+									reqd: reqd,
+									default: cur_frm.doc[fieldname] ?? fieldMeta.df.default,
+									options: fieldMeta.df.options,
+									description: fieldMeta.df.description,
+									read_only: 0, // Always allow editing in dialog
+								};
+
+								if (isDevelopment) {
+									console.log(`Field "${fieldname}":`, {
+										label: dialogField.label,
+										fieldtype: dialogField.fieldtype,
+										required: reqd ? "Yes" : "No",
+										current_value: cur_frm.doc[fieldname],
+										default_value: fieldMeta.df.default
+									});
+								}
+
+								return dialogField;
+							}).filter(Boolean); // Remove null entries
+
+							if (dialogFields.length === 0) {
+								if (isDevelopment) {
+									console.warn(
+										"Utils.action.editFields(): No valid fields to display."
+									);
+									console.groupEnd();
+								}
+								reject(
+									new Error(
+										"No valid fields to display in dialog."
+									)
+								);
+								return;
+							}
+
+							if (isDevelopment) {
+								console.log(`Total fields to display: ${dialogFields.length}`);
+								console.log("Dialog configuration:", {
+									title: title || `Edit Fields - ${action}`,
+									size: "small",
+									primary_action_label: primary_action_label || action,
+									secondary_action_label: "Cancel"
+								});
+							}
+
+							// Create and show the dialog
+							const dialog = new frappe.ui.Dialog({
+								title: title || `Edit Fields - ${action}`,
+								fields: dialogFields,
+								size: "small",
+								primary_action_label: primary_action_label || action,
+								secondary_action_label: "Cancel",
+								primary_action: async (values) => {
+									if (isDevelopment) {
+										console.group("Utils.action.editFields(): Processing form submission");
+										console.log("User submitted values:");
+										Object.entries(values).forEach(([field, value]) => {
+											console.log(`  - ${field}: ${JSON.stringify(value)}`);
+										});
+									}
+
+									try {
+										// Update all fields on the document
+										const response = await frappe.call({
+											method: "frappe.client.set_value",
+											args: {
+												doctype: cur_frm.doctype,
+												name: cur_frm.docname,
+												fieldname: values,
+											},
+										});
+
+										if (response && response.message) {
+											frappe.model.sync(response.message);
+											cur_frm.refresh_fields(
+												Object.keys(values)
+											);
+											if (isDevelopment) {
+												console.log("Server response:", response.message);
+												console.log(`Refreshed ${Object.keys(values).length} field(s)`);
+												console.log("Fields updated and form synced successfully");
+												console.groupEnd();
+												console.groupEnd();
+											}
+										}
+
+										actionCompleted = true;
+										dialog.hide();
+										resolve();
+									} catch (error) {
+										if (isDevelopment) {
+											console.error(
+												"Utils.action.editFields(): Error updating fields:",
+												error
+											);
+											console.groupEnd();
+											console.groupEnd();
+										}
+										frappe.msgprint({
+											title: "Error",
+											message: `Failed to update fields: ${error.message}`,
+											indicator: "red",
+										});
+										reject(error);
+									}
+								},
+								secondary_action: () => {
+									if (isDevelopment) {
+										console.log(
+											`Utils.action.editFields(): User cancelled action "${action}"`
+										);
+										console.groupEnd();
+									}
+									dialog.hide();
+									reject(
+										new Error("Workflow action cancelled.")
+									);
+								},
+							});
+
+							// Handle dialog close (X button or ESC key)
+							dialog.onhide = () => {
+								if (!actionCompleted) {
+									if (isDevelopment) {
+										console.log(
+											`Utils.action.editFields(): Dialog closed without completing action "${action}"`
+										);
+										console.groupEnd();
+									}
+									reject(new Error("Workflow action cancelled."));
+								}
+							};
+
+							if (isDevelopment) {
+								console.log("Dialog created and showing");
+							}
+
+							dialog.show();
+						});
 					} catch (error) {
 						throw error;
 					}

@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.8.1] - 2026-01-04
+
+### Fixed
+- **`action.editFields()`**: Fixed falsy value handling for field defaults
+  - Changed from `||` to nullish coalescing operator (`??`)
+  - Now correctly preserves `0`, `""`, and `false` values instead of falling back to defaults
+  - Only falls back to default when value is `null` or `undefined`
+  
+- **`action.editFields()`**: Dialog fields are now always editable
+  - Changed `read_only` property to always be `0` in dialog
+  - Previously inherited read-only state from form field metadata, preventing edits
+  - Dialog now allows editing even for fields that are read-only on the form
+
+## [2.8.0] - 2026-01-04
+
+### Added
+- **Action Interception**
+  - **`action.editFields()`**: New method to intercept workflow actions and edit specific fields via dialog
+  - Automatically fetches field metadata and pre-fills current values
+  - Supports required field validation and all standard Frappe field types
+  - Primary action button label defaults to the action name (can be customized via `primary_action_label`)
+  - Enhanced debug logging with detailed field metadata, dialog configuration, and submission tracking
+  - Proper cancellation handling for X button, Cancel button, and ESC key
+
+
 ## [2.7.0] - 2026-01-03
 
 ### Added
