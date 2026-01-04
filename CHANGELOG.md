@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.8.0] - 2026-01-04
+
+### Added
+- **Action Interception**
+  - **`action.editFields()`**: New method to intercept workflow actions and edit specific fields via dialog
+  - Automatically fetches field metadata and pre-fills current values
+  - Supports required field validation and all standard Frappe field types
+  - Primary action button label defaults to the action name (can be customized via `primary_action_label`)
+  - Enhanced debug logging with detailed field metadata, dialog configuration, and submission tracking
+  - Proper cancellation handling for X button, Cancel button, and ESC key
+
+
 ## [2.7.0] - 2026-01-03
 
 ### Added
