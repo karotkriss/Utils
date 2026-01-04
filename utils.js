@@ -5,7 +5,7 @@
  * This module simplifies form navigation, field management, workflow actions and transition definition, action interception and site information.,
  * automatically operating on the global cur_frm.
  *
- * @version 2.8.0
+ * @version 2.8.1
  *
  * @module Utils
  */
@@ -1754,10 +1754,10 @@ const Utils = (function () {
 									fieldname: fieldname,
 									fieldtype: fieldMeta.df.fieldtype || "Data",
 									reqd: reqd,
-									default: cur_frm.doc[fieldname] || fieldMeta.df.default,
+									default: cur_frm.doc[fieldname] ?? fieldMeta.df.default,
 									options: fieldMeta.df.options,
 									description: fieldMeta.df.description,
-									read_only: fieldMeta.df.read_only || 0,
+									read_only: 0, // Always allow editing in dialog
 								};
 
 								if (isDevelopment) {
@@ -1766,8 +1766,7 @@ const Utils = (function () {
 										fieldtype: dialogField.fieldtype,
 										required: reqd ? "Yes" : "No",
 										current_value: cur_frm.doc[fieldname],
-										default_value: fieldMeta.df.default,
-										read_only: dialogField.read_only ? "Yes" : "No"
+										default_value: fieldMeta.df.default
 									});
 								}
 
